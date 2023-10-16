@@ -85,11 +85,7 @@ public class PrebidServerConnection: NSObject, PrebidServerConnectionProtocol, U
         getFor(resourceURL, timeout: timeout, headersOnly: true, callback: callback)
     }
     
-<<<<<<< HEAD:PrebidMobile/PrebidMobileRendering/Networking/ServerConnection.swift
-    public func get(_ resourceURL: String?, timeout: TimeInterval = 0, callback: @escaping (ServerResponse) -> Void) {
-=======
     public func get(_ resourceURL: String?, timeout: TimeInterval = 0, callback: @escaping (PrebidServerResponse) -> Void) {
->>>>>>> ozone-2.1.2:PrebidMobile/PrebidMobileRendering/Networking/PrebidServerConnection.swift
         getFor(resourceURL, timeout: timeout, headersOnly: false, callback: callback)
     }
     

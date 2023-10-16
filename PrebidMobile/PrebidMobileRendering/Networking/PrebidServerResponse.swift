@@ -22,10 +22,6 @@ public class PrebidServerResponse: NSObject {
         return (200...299).contains(statusCode)
     }
     
-    public var isOKStatusCode: Bool {
-        return (200...299).contains(statusCode)
-    }
-    
     public var jsonDict: [String: Any]?
     public var rawData: Data?
     public var requestHeaders: [String: String]?
