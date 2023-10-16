@@ -37,6 +37,43 @@ public class Prebid: NSObject {
     
     public var storedBidResponses: [String: String] = [:]
     
+    
+    // MARK: OZONE ADDITIONS; all ozone methods start `ozone....` so it's easy to find them in intellisense
+    
+    // MB 20230301 Ozone changes
+    /**
+     * set app.ext.page value
+     */
+    public func ozoneSetAppPage( url: String ) {
+        ozoneAppPage = url;
+    }
+    /**
+     * set device.ip
+     */
+    public func ozoneSetDeviceIp( ip: String ) {
+        deviceIp = ip;
+    }
+    /**
+     * Set the entire ext.ozone object at once
+     */
+    public func ozoneSetExtOzone(data: [AnyHashable: Any] ) {
+        extOzoneDict = data;
+    }
+    /**
+     * call this if you want to allow the code to insert the default ext.prebid object
+     */
+    public func ozoneIncludeExtPrebid() {
+        doInsertExtPrebid = true;
+    }
+    
+    @objc public var extOzoneDict:[AnyHashable: Any] = [:]
+    @objc public var doInsertExtPrebid: Bool = false
+    @objc public var ozoneAppPage: String? = nil
+    @objc public var deviceIp: String? = nil
+    
+    
+    // MARK: END OF OZONE
+    
     /**
      * This property is set by the developer when he is willing to assign the assetID for Native ad.
      **/
@@ -184,11 +221,11 @@ public class Prebid: NSObject {
     ///   - gadMobileAdsObject: GADMobileAds object
     ///   - completion: returns initialization status and optional error
     public static func initializeSDK(_ gadMobileAdsObject: AnyObject? = nil, _ completion: PrebidInitializationCallback? = nil) {
-        let _ = ServerConnection.shared
+        let _ = PrebidServerConnection.shared
         let _ = PBMLocationManager.shared
         let _ = UserConsentDataManager.shared
         
-        PBMOpenMeasurementWrapper.shared.initializeJSLib(with: PBMFunctions.bundleForSDK())
+        PrebidJSLibraryManager.shared.downloadLibraries()
         
         serverStatusRequester.requestStatus { completion?($0, $1) }
         

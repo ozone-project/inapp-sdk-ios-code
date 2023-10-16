@@ -55,7 +55,7 @@ public class BannerView: UIView,
     }
     
     @objc public var adFormat: AdFormat {
-        get { adUnitConfig.adFormats.first ?? .display }
+        get { adUnitConfig.adFormats.first ?? .banner }
         set { adUnitConfig.adFormats = [newValue] }
     }
     
@@ -121,7 +121,7 @@ public class BannerView: UIView,
         
         adLoadFlowController = PBMAdLoadFlowController(
             bidRequesterFactory: { [adUnitConfig] config in
-                PBMBidRequester(connection: ServerConnection.shared,
+                PBMBidRequester(connection: PrebidServerConnection.shared,
                                 sdkConfiguration: Prebid.shared,
                                 targeting: Targeting.shared,
                                 adUnitConfiguration: adUnitConfig)

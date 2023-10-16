@@ -20,6 +20,17 @@
 #import "PBMORTBAppExt.h"
 #import "PBMORTBAppContent.h"
 
+
+
+// 20230302 MB ozone change, allows us to pull data from Prebid.shared
+#import "PrebidMobileSwiftHeaders.h"
+#if __has_include("PrebidMobile-Swift.h")
+#import "PrebidMobile-Swift.h"
+#else
+#import <PrebidMobile/PrebidMobile-Swift.h>
+#endif
+
+
 @implementation PBMORTBApp
 
 - (nonnull instancetype )init {
@@ -63,6 +74,9 @@
     ret[@"publisher"] = [[self.publisher toJsonDictionary] nullIfEmpty];
     ret[@"content"] = [[self.content toJsonDictionary] nullIfEmpty];
     ret[@"ext"] = [[self.ext toJsonDictionary] nullIfEmpty];
+    if(Prebid.shared.ozoneAppPage) {
+        ret[@"ext"][@"page"] = Prebid.shared.ozoneAppPage;
+    }
     
     [ret pbmRemoveEmptyVals];
     

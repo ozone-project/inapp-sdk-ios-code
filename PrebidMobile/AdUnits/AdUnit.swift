@@ -13,36 +13,37 @@
 import UIKit
 import ObjectiveC.runtime
 
-@objcMembers public class AdUnit: NSObject, DispatcherDelegate {
-    
+@objcMembers
+public class AdUnit: NSObject, DispatcherDelegate {
+
     public var pbAdSlot: String? {
         get { adUnitConfig.getPbAdSlot()}
         set { adUnitConfig.setPbAdSlot(newValue) }
     }
-    
+
     private static let PB_MIN_RefreshTime = 30000.0
 
     var identifier: String
 
     var dispatcher: Dispatcher?
-    
+
     var adUnitConfig: AdUnitConfig
-    
+
     var bidRequester: PBMBidRequester?
-    
+
     var adSizes: [CGSize] {
         get { [adUnitConfig.adSize] + (adUnitConfig.additionalSizes ?? []) }
         set {
             if let adSize = newValue.first {
                 adUnitConfig.adSize = adSize
             }
-            
+
             if newValue.count > 1 {
                 adUnitConfig.additionalSizes = Array(newValue.dropFirst())
             }
         }
     }
-    
+
     var prebidConfigId: String {
         get { adUnitConfig.configId }
         set { adUnitConfig.configId = newValue }
@@ -62,14 +63,20 @@ import ObjectiveC.runtime
     //notification flag set to determine if delegate call needs to be made after timeout delegate is sent
     var timeOutSignalSent: Bool! = false
 
-    public init(configId: String, size: CGSize?) {
+    public init(configId: String, size: CGSize?, adFormats: Set<AdFormat>) {
         adUnitConfig = AdUnitConfig(configId: configId, size: size ?? CGSize.zero)
         adUnitConfig.adConfiguration.isOriginalAPI = true
+        adUnitConfig.adFormats = adFormats
         identifier = UUID.init().uuidString
+
         super.init()
-        
+
         // PBS should cache the bid for original api.
         Prebid.shared.useCacheForReportingWithRenderingAPI = true
+    }
+
+    deinit {
+        dispatcher?.invalidate()
     }
 
     //TODO: dynamic is used by tests
@@ -90,7 +97,19 @@ import ObjectiveC.runtime
 
     //TODO: dynamic is used by tests
     dynamic public func fetchDemand(adObject: AnyObject, completion: @escaping(_ result: ResultCode) -> Void) {
-        
+
+        // check we have adUnitCode and customTargeting set
+        if(self.ozoneGetImpAdUnitCode() == "") {
+            print("ERROR: no adunit code has been set for this adunit!")
+            completion(.prebidSDKMisuse)
+            return
+        }
+        if(Prebid.shared.ozoneAppPage == nil) {
+            print("ERROR: you need to call Prebid.shared.ozoneSetAppPage(url:) before you can request ads for this adunit!")
+            completion(.prebidSDKMisuse)
+            return
+        }
+
         if !(self is NativeRequest){
             for size in adSizes {
                 if (size.width < 0 || size.height < 0) {
@@ -121,15 +140,15 @@ import ObjectiveC.runtime
         self.closureAd = completion
         adServerObject = adObject
 
-        bidRequester = PBMBidRequester(connection: ServerConnection.shared,
+        bidRequester = PBMBidRequester(connection: PrebidServerConnection.shared,
                                        sdkConfiguration: Prebid.shared,
                                        targeting: Targeting.shared,
                                        adUnitConfiguration: adUnitConfig)
-        
+
         bidRequester?.requestBids { [weak self] bidResponse, error in
             guard let self = self else { return }
             self.didReceiveResponse = true
-            
+
             if let bidResponse = bidResponse {
                 if (!self.timeOutSignalSent) {
                     self.handleBidResponse(adObject: adObject, bidResponse: bidResponse) { resultCode in
@@ -156,7 +175,7 @@ import ObjectiveC.runtime
             }
         })
     }
-    
+
     private func handleBidResponse(adObject: AnyObject, bidResponse: BidResponse, completion: (ResultCode) -> Void) {
         if let winningBid = bidResponse.winningBid {
             if self.adUnitConfig.adFormats.contains(AdFormat.native) {
@@ -183,7 +202,7 @@ import ObjectiveC.runtime
     }
 
     // MARK: - adunit ext data aka inventory data (imp[].ext.data)
-    
+
     /**
      * This method obtains the context data keyword & value for adunit context targeting
      * if the key already exists the value will be appended to the list. No duplicates will be added
@@ -192,7 +211,7 @@ import ObjectiveC.runtime
     public func addContextData(key: String, value: String) {
         addExtData(key: key, value: value)
     }
-    
+
     /**
      * This method obtains the context data keyword & values for adunit context targeting
      * the values if the key already exist will be replaced with the new set of values
@@ -201,7 +220,7 @@ import ObjectiveC.runtime
     public func updateContextData(key: String, value: Set<String>) {
         updateExtData(key: key, value: value)
     }
-    
+
     /**
      * This method allows to remove specific context data keyword & values set from adunit context targeting
      */
@@ -209,7 +228,7 @@ import ObjectiveC.runtime
     public func removeContextData(forKey: String) {
         removeExtData(forKey: forKey)
     }
-    
+
     /**
      * This method allows to remove all context data set from adunit context targeting
      */
@@ -217,12 +236,12 @@ import ObjectiveC.runtime
     public func clearContextData() {
         clearExtData()
     }
-    
+
     // Used for tests
     func getExtDataDictionary() -> [String: [String]] {
         return adUnitConfig.getExtData()
     }
-    
+
     /**
      * This method obtains the ext data keyword & value for adunit targeting
      * if the key already exists the value will be appended to the list. No duplicates will be added
@@ -230,7 +249,7 @@ import ObjectiveC.runtime
     public func addExtData(key: String, value: String) {
         adUnitConfig.addExtData(key: key, value: value)
     }
-    
+
     /**
      * This method obtains the ext data keyword & values for adunit targeting
      * the values if the key already exist will be replaced with the new set of values
@@ -238,23 +257,23 @@ import ObjectiveC.runtime
     public func updateExtData(key: String, value: Set<String>) {
         adUnitConfig.updateExtData(key: key, value: value)
     }
-    
+
     /**
      * This method allows to remove specific ext data keyword & values set from adunit targeting
      */
     public func removeExtData(forKey: String) {
         adUnitConfig.removeExtData(for: forKey)
     }
-    
+
     /**
      * This method allows to remove all ext data set from adunit targeting
      */
     public func clearExtData() {
         adUnitConfig.clearExtData()
-    }    
-    
+    }
+
     // MARK: - adunit ext keywords (imp[].ext.keywords)
-    
+
     /**
      * This method obtains the context keyword for adunit context targeting
      * Inserts the given element in the set if it is not already present.
@@ -263,7 +282,7 @@ import ObjectiveC.runtime
     public func addContextKeyword(_ newElement: String) {
         addExtKeyword(newElement)
     }
-    
+
     /**
      * This method obtains the context keyword set for adunit context targeting
      * Adds the elements of the given set to the set.
@@ -272,7 +291,7 @@ import ObjectiveC.runtime
     public func addContextKeywords(_ newElements: Set<String>) {
         addExtKeywords(newElements)
     }
-    
+
     /**
      * This method allows to remove specific context keyword from adunit context targeting
      */
@@ -280,7 +299,7 @@ import ObjectiveC.runtime
     public func removeContextKeyword(_ element: String) {
         removeExtKeyword(element)
     }
-    
+
     /**
      * This method allows to remove all keywords from the set of adunit context targeting
      */
@@ -288,7 +307,7 @@ import ObjectiveC.runtime
     public func clearContextKeywords() {
         clearExtKeywords()
     }
-    
+
     /**
      * This method obtains the keyword for adunit targeting
      * Inserts the given element in the set if it is not already present.
@@ -296,7 +315,7 @@ import ObjectiveC.runtime
     public func addExtKeyword(_ newElement: String) {
         adUnitConfig.addExtKeyword(newElement)
     }
-    
+
     /**
      * This method obtains the keyword set for adunit targeting
      * Adds the elements of the given set to the set.
@@ -304,40 +323,40 @@ import ObjectiveC.runtime
     public func addExtKeywords(_ newElements: Set<String>) {
         adUnitConfig.addExtKeywords(newElements)
     }
-    
+
     /**
      * This method allows to remove specific keyword from adunit targeting
      */
     public func removeExtKeyword(_ element: String) {
         adUnitConfig.removeExtKeyword(element)
     }
-    
+
     /**
      * This method allows to remove all keywords from the set of adunit targeting
      */
     public func clearExtKeywords() {
         adUnitConfig.clearExtKeywords()
     }
-    
+
     // Used for tests
     func getExtKeywordsSet() -> Set<String> {
         adUnitConfig.getExtKeywords()
     }
-    
+
     // MARK: - App Content (app.content.data)
-    
+
     public func setAppContent(_ appContentObject: PBMORTBAppContent) {
         adUnitConfig.setAppContent(appContentObject)
     }
-    
+
     public func getAppContent() -> PBMORTBAppContent? {
         return adUnitConfig.getAppContent()
     }
-    
+
     public func clearAppContent() {
         adUnitConfig.clearAppContent()
     }
-    
+
     public func addAppContentData(_ dataObjects: [PBMORTBContentData]) {
         adUnitConfig.addAppContentData(dataObjects)
     }
@@ -345,25 +364,25 @@ import ObjectiveC.runtime
     public func removeAppContentData(_ dataObject: PBMORTBContentData) {
         adUnitConfig.removeAppContentData(dataObject)
     }
-    
+
     public func clearAppContentData() {
         adUnitConfig.clearAppContentData()
     }
-    
+
     // MARK: - User Data (user.data)
-        
+
     public func getUserData() -> [PBMORTBContentData]? {
         return adUnitConfig.getUserData()
     }
-    
+
     public func addUserData(_ userDataObjects: [PBMORTBContentData]) {
         adUnitConfig.addUserData(userDataObjects)
     }
-    
+
     public func removeUserData(_ userDataObject: PBMORTBContentData) {
         adUnitConfig.removeUserData(userDataObject)
     }
-    
+
     public func clearUserData() {
         adUnitConfig.clearUserData()
     }
@@ -381,18 +400,22 @@ import ObjectiveC.runtime
             Log.error("auto refresh not set as the refresh time is less than to \(AdUnit.PB_MIN_RefreshTime as Double) seconds")
             return
         }
-        
+
         if self.dispatcher?.state == .stopped {
             self.dispatcher?.setAutoRefreshMillis(time: time)
             return
         }
-        
+
         stopDispatcher()
-        
+
         initDispatcher(refreshTime: time)
 
         if isInitialFetchDemandCallMade {
+            print("starting dispatcher")
             startDispatcher()
+        } else {
+            print("NOT starting dispatcher - initial call not made")
+
         }
     }
 
@@ -402,7 +425,7 @@ import ObjectiveC.runtime
     public func stopAutoRefresh() {
         stopDispatcher()
     }
-    
+
     public func resumeAutoRefresh() {
         if self.dispatcher?.state == .stopped {
             if isInitialFetchDemandCallMade {
@@ -448,4 +471,28 @@ import ObjectiveC.runtime
         }
         dispatcher.stop()
     }
+
+    // MARK: ozone methods
+    /**
+     * set imp[].ext.ozone.AdUnitCode
+     */
+    public func ozoneSetImpAdUnitCode(code: String) {
+        adUnitConfig.ozoneAdUnitCode = code
+    }
+    public func ozoneGetImpAdUnitCode() -> String{
+        return adUnitConfig.ozoneAdUnitCode
+    }
+    /**
+     * set imp[].ext.ozone.customData
+     */
+    public func ozoneSetCustomDataTargeting(data: [AnyHashable: Any]) {
+        adUnitConfig.ozoneCustomDataTargeting = data
+    }
+    public func ozoneGetCustomDataTargeting() -> [AnyHashable: Any] {
+        return adUnitConfig.ozoneCustomDataTargeting ?? [:]
+    }
+    // NOTE that transactionId is set automatically
+
+
+
 }

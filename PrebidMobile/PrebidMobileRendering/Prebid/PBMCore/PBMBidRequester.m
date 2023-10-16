@@ -31,7 +31,7 @@
 
 @interface PBMBidRequester ()
 
-@property (nonatomic, strong, nonnull, readonly) id<ServerConnectionProtocol> connection;
+@property (nonatomic, strong, nonnull, readonly) id<PrebidServerConnectionProtocol> connection;
 @property (nonatomic, strong, nonnull, readonly) Prebid *sdkConfiguration;
 @property (nonatomic, strong, nonnull, readonly) Targeting *targeting;
 @property (nonatomic, strong, nonnull, readonly) AdUnitConfig *adUnitConfiguration;
@@ -42,7 +42,7 @@
 
 @implementation PBMBidRequester
 
-- (instancetype)initWithConnection:(id<ServerConnectionProtocol>)connection
+- (instancetype)initWithConnection:(id<PrebidServerConnectionProtocol>)connection
                   sdkConfiguration:(Prebid *)sdkConfiguration
                          targeting:(Targeting *)targeting
                adUnitConfiguration:(AdUnitConfig *)adUnitConfiguration {
@@ -71,6 +71,8 @@
     self.completion = completion ?: ^(BidResponse *r, NSError *e) {};
     
     NSString * const requestString = [self getRTBRequest];
+    NSLog(@"request string is : %@", requestString);
+
            
     NSError * hostURLError = nil;
     NSString * const requestServerURL = [Host.shared getHostURLWithHost:self.sdkConfiguration.prebidServerHost error:&hostURLError];
@@ -92,7 +94,7 @@
     [self.connection post:requestServerURL
                      data:[requestString dataUsingEncoding:NSUTF8StringEncoding]
                   timeout:postTimeout
-                 callback:^(ServerResponse * _Nonnull serverResponse) {
+                 callback:^(PrebidServerResponse * _Nonnull serverResponse) {
         @strongify(self);
         if (!self) { return; }
         

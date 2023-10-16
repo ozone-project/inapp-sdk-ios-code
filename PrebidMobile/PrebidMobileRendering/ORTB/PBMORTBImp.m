@@ -23,6 +23,14 @@
 #import "PBMORTBPmp.h"
 #import "PBMORTBVideo.h"
 
+// 20230302 MB ozone change, allows us to pull data from Prebid.shared
+#import "PrebidMobileSwiftHeaders.h"
+#if __has_include("PrebidMobile-Swift.h")
+#import "PrebidMobile-Swift.h"
+#else
+#import <PrebidMobile/PrebidMobile-Swift.h>
+#endif
+
 @implementation PBMORTBImp
 
 - (nonnull instancetype)init {
@@ -37,7 +45,8 @@
     _extPrebid = [[PBMORTBImpExtPrebid alloc] init];
     _extSkadn = [PBMORTBImpExtSkadn new];
     _extData = [NSMutableDictionary<NSString *, id> new];
-    
+    _extOzoneData =[[NSMutableDictionary alloc] init];
+
     return self;
 }
 
@@ -58,6 +67,11 @@
     
     ret[@"ext"] = [[self extDictionary] nullIfEmpty];
     
+    // Ozone changes
+    ret[@"ext"][@"ozone"] = self.extOzoneData; //this was set by PMBPrebidParameterBuilder
+    ret[@"tagid"] = self.extPrebid.storedRequestID; // might need to wrap this in try/catch
+    ret[@"placementId"] = self.extPrebid.storedRequestID; // might need to wrap this in try/catch
+
     ret = [ret pbmCopyWithoutEmptyVals];
     
     return ret;
@@ -97,6 +111,7 @@
     
     _extData = jsonDictionary[@"ext"][@"data"];
     _extKeywords = jsonDictionary[@"ext"][@"keywords"];
+    _extOzoneData = jsonDictionary[@"ext"][@"ozone"];
     
     return self;
 }
@@ -124,6 +139,9 @@
     if (self.extKeywords && self.extKeywords.length > 0) {
         ret[@"keywords"] = self.extKeywords;
     }
+
+// MB ozone - I might have to change some other things here, maybe comment something out
+ ret[@"ozone"] = self.extOzoneData; // contains adUnitCode, targeting, transactionId
     
     return [ret pbmCopyWithoutEmptyVals];
 }
