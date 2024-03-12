@@ -13,24 +13,17 @@
  limitations under the License.
  */
 
-import Foundation
+#import "PBMORTBAbstract.h"
+#import "PBMORTBAbstract+Protected.h"
 
-@objc(PBMNativeAdConfiguration) @objcMembers
-public class NativeAdConfiguration: NSObject {
-    
-    /// Version of the Native Markup version in use.
-    public var version: String = "1.2"
-    
-    public var markupRequestObject = NativeMarkupRequestObject()
-    
-    public override init() {
-        super.init()
-    }
-    
-    init(nativeParameters: NativeParameters) {
-        version = nativeParameters.version
-        markupRequestObject = NativeMarkupRequestObject(nativeParameters: nativeParameters)
-        
-        super.init()
-    }
-}
+NS_ASSUME_NONNULL_BEGIN
+
+@interface PBMORTBSDKConfiguration: PBMORTBAbstract
+
+@property (nonatomic, copy, nullable) NSNumber *cftBanner;
+
+@property (nonatomic, copy, nullable) NSNumber *cftPreRender;
+
+@end
+
+NS_ASSUME_NONNULL_END

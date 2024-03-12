@@ -19,6 +19,7 @@
 #import "PBMORTBPrebid.h"
 #import "PBMPrebidParameterBuilder.h"
 #import "PBMParameterBuilderService.h"
+#import "PBMORTBSDKConfiguration.h"
 
 #import "PrebidMobileSwiftHeaders.h"
 #if __has_include("PrebidMobile-Swift.h")
@@ -71,8 +72,6 @@
     self.completion = completion ?: ^(BidResponse *r, NSError *e) {};
     
     NSString * const requestString = [self getRTBRequest];
-    NSLog(@"request string is : %@", requestString);
-
            
     NSError * hostURLError = nil;
     NSString * const requestServerURL = [Host.shared getHostURLWithHost:self.sdkConfiguration.prebidServerHost error:&hostURLError];
@@ -134,6 +133,20 @@
                     self.sdkConfiguration.timeoutMillisDynamic = @(updatedTimeout);
                     self.sdkConfiguration.timeoutUpdated = true;
                 };
+            }
+            
+            PBMORTBSDKConfiguration *pbsSDKConfig = [bidResponse.ext.extPrebid.passthrough filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(PBMORTBExtPrebidPassthrough *_Nullable evaluatedObject, NSDictionary<NSString *,id> * _Nullable bindings) {
+                return [evaluatedObject.type isEqual: @"prebidmobilesdk"];
+            }]].firstObject.sdkConfiguration;
+            
+            if(pbsSDKConfig) {
+                if(pbsSDKConfig.cftBanner) {
+                    Prebid.shared.creativeFactoryTimeout = pbsSDKConfig.cftBanner.doubleValue;
+                }
+                
+                if(pbsSDKConfig.cftPreRender) {
+                    Prebid.shared.creativeFactoryTimeoutPreRenderContent = pbsSDKConfig.cftPreRender.doubleValue;
+                }
             }
         }
         

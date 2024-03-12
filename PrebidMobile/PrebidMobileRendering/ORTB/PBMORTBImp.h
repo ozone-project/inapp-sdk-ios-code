@@ -112,6 +112,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, nullable) NSMutableDictionary<NSString *, id> *extData;
 @property (nonatomic, strong, nullable) NSString *extKeywords;
 @property (nonatomic, strong, nullable) NSMutableDictionary *extOzoneData;
+@property (nonatomic, strong, nullable) NSString *extGPID;
+
 
 - (instancetype)init;
 

@@ -13,24 +13,15 @@
  limitations under the License.
  */
 
-import Foundation
+#import "PBMORTBAbstract.h"
+#import "PBMORTBExtPrebidPassthrough.h"
 
-@objc(PBMNativeAdConfiguration) @objcMembers
-public class NativeAdConfiguration: NSObject {
-    
-    /// Version of the Native Markup version in use.
-    public var version: String = "1.2"
-    
-    public var markupRequestObject = NativeMarkupRequestObject()
-    
-    public override init() {
-        super.init()
-    }
-    
-    init(nativeParameters: NativeParameters) {
-        version = nativeParameters.version
-        markupRequestObject = NativeMarkupRequestObject(nativeParameters: nativeParameters)
-        
-        super.init()
-    }
-}
+NS_ASSUME_NONNULL_BEGIN
+
+@interface PBMORTBBidResponseExtPrebid : PBMORTBAbstract
+
+@property (nonatomic, copy, nullable) NSArray<PBMORTBExtPrebidPassthrough *> *passthrough;
+
+@end
+
+NS_ASSUME_NONNULL_END

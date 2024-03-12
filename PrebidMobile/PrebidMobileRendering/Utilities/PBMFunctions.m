@@ -38,13 +38,8 @@ static NSString * const PBMPlistExt = @"plist";
 @implementation PBMFunctions
 
 + (nonnull NSString *)sdkVersion {
-    NSString *version = [PBMFunctions infoPlistValueFor:@"CFBundleShortVersionString"];
+    NSString *version = Constants.PREBID_VERSION;
     return version ? version : @"";
-}
-
-+ (NSString *)omidVersion {
-    // FIXME: review the version on the next certification with IAB
-    return @"5.0";
 }
 
 // MARK: - SKAdNetwork

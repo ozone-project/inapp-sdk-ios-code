@@ -112,6 +112,7 @@
     _extData = jsonDictionary[@"ext"][@"data"];
     _extKeywords = jsonDictionary[@"ext"][@"keywords"];
     _extOzoneData = jsonDictionary[@"ext"][@"ozone"];
+    _extGPID = jsonDictionary[@"ext"][@"gpid"];
     
     return self;
 }
@@ -139,9 +140,13 @@
     if (self.extKeywords && self.extKeywords.length > 0) {
         ret[@"keywords"] = self.extKeywords;
     }
+    
+    if (self.extGPID) {
+        ret[@"gpid"] = self.extGPID;
+    }
+    // MB ozone
+    ret[@"ozone"] = self.extOzoneData; // contains adUnitCode, targeting, transactionId
 
-// MB ozone - I might have to change some other things here, maybe comment something out
- ret[@"ozone"] = self.extOzoneData; // contains adUnitCode, targeting, transactionId
     
     return [ret pbmCopyWithoutEmptyVals];
 }

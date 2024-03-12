@@ -16,7 +16,8 @@
 import Foundation
 import UIKit
 
-@objcMembers public class NativeAd: NSObject, CacheExpiryDelegate {
+@objcMembers
+public class NativeAd: NSObject, CacheExpiryDelegate {
     
     // MARK: - Public properties
     
@@ -35,7 +36,7 @@ import UIKit
     private var viewabilityTimer: Timer?
     private var viewabilityValue = 0
     private var impressionHasBeenTracked = false
-    private var viewForTracking: UIView?
+    private weak var viewForTracking: UIView?
     //Click Handling
     private var gestureRecognizerRecords = [NativeAdGestureRecognizerRecord]()
     
@@ -108,6 +109,10 @@ import UIKit
             return nil
         }
         
+        let macrosHelper = PBMORTBMacrosHelper(bid: rawBid)
+        rawBid.adm = macrosHelper.replaceMacros(in: rawBid.adm)
+        rawBid.nurl = macrosHelper.replaceMacros(in: rawBid.nurl)
+        
         let ad = NativeAd()
         
         let internalEventTracker = PrebidServerEventTracker()
@@ -133,7 +138,9 @@ import UIKit
         }
         
         ad.nativeAdMarkup = nativeAdMarkup
-        CacheManager.shared.delegate = ad
+        
+        CacheManager.shared.setDelegate(delegate: CacheExpiryDelegateWrapper(id: cacheId, delegate: ad))
+        
         return ad
     }
     
@@ -169,10 +176,14 @@ import UIKit
             Log.error("The native Ad is expired, cannot use it for tracking")
             return false
         }
-        viewForTracking = view
-        setupViewabilityTracker()
-        attachGestureRecognizersToNativeView(nativeView: view, withClickableViews: clickableViews)
-        return true
+        if (viewForTracking != nil || impressionHasBeenTracked) {
+            return false
+        } else {
+            viewForTracking = view
+            setupViewabilityTracker()
+            attachGestureRecognizersToNativeView(nativeView: view, withClickableViews: clickableViews)
+            return true
+        }
     }
     
     private func unregisterViewFromTracking() {
@@ -212,6 +223,9 @@ import UIKit
                 return
             }
             strongSelf.checkViewability()
+            if (strongSelf.viewForTracking == nil) {
+                timer.invalidate()
+            }
         }
     }
     
@@ -290,10 +304,22 @@ import UIKit
     @objc private func handleClick() {
         self.delegate?.adWasClicked?(ad: self)
         if let clickUrl = nativeAdMarkup?.link?.url,
-           let clickUrlString = clickUrl.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-           let url = URL(string: clickUrlString) {
-            if !openURLWithExternalBrowser(url: url) {
+           let url = clickUrl.encodedURL(with: .urlQueryAllowed) {
+            if openURLWithExternalBrowser(url: url) {
+                if let clickTrackers = nativeAdMarkup?.link?.clicktrackers {
+                    fireClickTrackers(clickTrackersUrls: clickTrackers)
+                }
+            } else {
                 Log.debug("Could not open click URL: \(clickUrl)")
+            }
+        }
+    }
+    
+    
+    private func fireClickTrackers(clickTrackersUrls: [String]) {
+        if clickTrackersUrls.count > 0 {
+            TrackerManager.shared.fireTrackerURLArray(arrayWithURLs: clickTrackersUrls) {
+                _ in
             }
         }
     }

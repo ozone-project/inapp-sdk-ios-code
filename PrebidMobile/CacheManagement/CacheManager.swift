@@ -16,13 +16,14 @@ limitations under the License.
 import UIKit
 
 @objc(PBMCacheManager)
+@objcMembers
 public class CacheManager: NSObject {
     
     public static let cacheManagerExpireInterval : TimeInterval = 300
+    
     /**
      * The class is created as a singleton object & used
      */
-    @objc
     public static let shared = CacheManager()
     
     /**
@@ -31,33 +32,52 @@ public class CacheManager: NSObject {
     private override init() {
         super.init()
     }
-    
+
+    private let lock = NSLock()
     internal var savedValuesDict = [String : String]()
-    weak var delegate: CacheExpiryDelegate?
+    private(set) var delegates = [CacheExpiryDelegateWrapper]()
     
     public func save(content: String, expireInterval: TimeInterval = CacheManager.cacheManagerExpireInterval) -> String? {
         if content.isEmpty {
             return nil
         } else {
+            lock.lock()
+            defer {
+                lock.unlock()
+            }
             let cacheId = "Prebid_" + UUID().uuidString
             self.savedValuesDict[cacheId] = content
             DispatchQueue.main.asyncAfter(deadline: .now() + expireInterval, execute: {
+                self.lock.lock()
+                defer {
+                    self.lock.unlock()
+                }
                 self.savedValuesDict.removeValue(forKey: cacheId)
-                self.delegate?.cacheExpired()
+                
+                if let delegate = self.delegates.filter({ $0.id == cacheId }).first {
+                    delegate.delegate?.cacheExpired()
+                    self.delegates.removeAll { $0.id == cacheId }
+                }
             })
             return cacheId
         }
     }
     
-    public func isValid(cacheId: String) -> Bool{
-        return self.savedValuesDict.keys.contains(cacheId)
+    public func isValid(cacheId: String) -> Bool {
+        lock.withLock {
+            return self.savedValuesDict.keys.contains(cacheId)
+        }
     }
     
-    public func get(cacheId: String) -> String?{
-        return self.savedValuesDict[cacheId]
+    public func get(cacheId: String) -> String? {
+        lock.withLock {
+            return self.savedValuesDict[cacheId]
+        }
     }
-}
-
-protocol CacheExpiryDelegate : AnyObject{
-    func cacheExpired()
+    
+    func setDelegate(delegate: CacheExpiryDelegateWrapper) {
+        lock.withLock {
+            delegates.append(delegate)
+        }
+    }
 }

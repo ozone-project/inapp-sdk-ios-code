@@ -74,11 +74,6 @@
     ret[@"regs"] = [[self.regs toJsonDictionary] nullIfEmpty];
     ret[@"source"] = [[self.source toJsonDictionary] nullIfEmpty];
     
-    // was originally in the github code:
-    // PBMMutableJsonDictionary * const ext = [PBMMutableJsonDictionary new];
-    // ext[@"prebid"] = [[self.extPrebid toJsonDictionary] nullIfEmpty];
-    // ret[@"ext"] = [[ext pbmCopyWithoutEmptyVals] nullIfEmpty];
-
     if(Prebid.shared.doInsertExtPrebid) {
         PBMMutableJsonDictionary * const ext = [PBMMutableJsonDictionary new];
         ext[@"prebid"] = [[self.extPrebid toJsonDictionary] nullIfEmpty];
@@ -87,9 +82,6 @@
     if(!ret[@"ext"]) {
         ret[@"ext"] = [[NSMutableDictionary alloc] init];
     }
-//    ret[@"ext"][@"ozone"] = Prebid.shared.extOzoneDict; // this is for ext.ozone - we're not adding this now
-
-
     ret = [ret pbmCopyWithoutEmptyVals];
     
     return ret;

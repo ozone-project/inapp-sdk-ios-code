@@ -27,4 +27,21 @@ extension String {
         
         return false
     }
+    
+    func encodedURL(with characterSet: CharacterSet) -> URL? { 
+        if let url = URL(string: self) {
+            return url
+        }
+        
+        if let encodedURLString = addingPercentEncoding(withAllowedCharacters: characterSet),
+            let url = URL(string: encodedURLString) {
+            return url
+        }
+        
+        return nil
+    }
+    
+    func containsOnly(_ characterSet: CharacterSet) -> Bool {
+        return self.trimmingCharacters(in: characterSet).count == 0
+    }
 }

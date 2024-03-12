@@ -24,21 +24,21 @@ public let refreshIntervalDefault: TimeInterval  = 60
 public class AdUnitConfig: NSObject, NSCopying {
 
     // MARK: - Public properties
-
+       
     public var configId: String
-
-    public let adConfiguration = AdConfiguration();
-
+    
+    public let adConfiguration = AdConfiguration()
+    
     public var adFormats: Set<AdFormat> {
         didSet {
             updateAdFormat()
         }
     }
-
+    
     public var adSize: CGSize
-
+    
     public var minSizePerc: NSValue?
-
+    
     public var adPosition = AdPosition.undefined
 
     public var extDataDictionary: [String : [String]] {
@@ -47,21 +47,13 @@ public class AdUnitConfig: NSObject, NSCopying {
 
     public var nativeAdConfiguration: NativeAdConfiguration?
 
-    // MARK: ozone params
-
-    public var ozoneAdUnitCode: String = ""
-    public var ozoneCustomDataTargeting: [AnyHashable: Any]? = [:]
-    public var ozoneTransactionId: String = UUID.init().uuidString
-
-
-
     // MARK: - Computed Properties
-
+    
     public var additionalSizes: [CGSize]? {
         get { sizes }
         set { sizes = newValue }
     }
-
+    
     var _refreshInterval: TimeInterval = refreshIntervalDefault
     public var refreshInterval: TimeInterval {
         get { _refreshInterval }
@@ -76,108 +68,118 @@ public class AdUnitConfig: NSObject, NSCopying {
             } else {
                 let lowerClamped = max(newValue, refreshIntervalMin);
                 let doubleClamped = min(lowerClamped, refreshIntervalMax);
-
+                
                 _refreshInterval = doubleClamped;
-
+                
                 if self.refreshInterval != newValue {
                     Log.warn("The value \(newValue) is out of range [\(refreshIntervalMin);\(refreshIntervalMax)]. The value \(_refreshInterval) will be used")
                 }
             }
         }
     }
+    
+    public var gpid: String?
 
     // MARK: - Public Methods
-
+    
     public convenience init(configId: String) {
         self.init(configId: configId, size: CGSize.zero)
     }
-
+    
     public init(configId: String, size: CGSize) {
         self.configId = configId
         self.adSize = size
-
+        
         adFormats = [.banner]
-
+        
         adConfiguration.autoRefreshDelay = 0
         adConfiguration.size = adSize
     }
-
+    
     // MARK: - Ext Data (imp[].ext.data)
-
+    
     @available(*, deprecated, message: "This method is deprecated. Please, use addExtData method instead.")
     public func addContextData(key: String, value: String) {
         addExtData(key: key, value: value)
     }
-
+    
     @available(*, deprecated, message: "This method is deprecated. Please, use updateExtData method instead.")
     public func updateContextData(key: String, value: Set<String>) {
         updateExtData(key: key, value: value)
     }
-
+    
     @available(*, deprecated, message: "This method is deprecated. Please, use removeExtData method instead.")
     public func removeContextData(for key: String) {
         removeExtData(for: key)
     }
-
+    
     @available(*, deprecated, message: "This method is deprecated. Please, use clearExtData method instead.")
     public func clearContextData() {
         clearExtData()
     }
-
+    
     @available(*, deprecated, message: "This method is deprecated. Please, use getExtData method instead.")
     public func getContextData() -> [String: [String]] {
         getExtData()
+    }
+    
+    func setExtData(_ extData: [String: Set<String>]) {
+        extensionData = extData
     }
 
     public func addExtData(key: String, value: String) {
         if extensionData[key] == nil {
             extensionData[key] = Set<String>()
         }
-
+        
         extensionData[key]?.insert(value)
     }
-
+    
     public func updateExtData(key: String, value: Set<String>) {
         extensionData[key] = value
     }
-
+    
     public func removeExtData(for key: String) {
         extensionData.removeValue(forKey: key)
     }
-
+    
     public func clearExtData() {
         extensionData.removeAll()
     }
-
+    
     public func getExtData() -> [String: [String]] {
         extDataDictionary
     }
 
     // MARK: - Ext keywords (imp[].ext.keywords)
-
+    
     @available(*, deprecated, message: "This method is deprecated. Please, use addExtKeyword method instead.")
     public func addContextKeyword(_ newElement: String) {
         addExtKeyword(newElement)
     }
-
+    
     @available(*, deprecated, message: "This method is deprecated. Please, use addExtKeywords method instead.")
     public func addContextKeywords(_ newElements: Set<String>) {
         addExtKeywords(newElements)
     }
-
+    
     @available(*, deprecated, message: "This method is deprecated. Please, use removeExtKeyword method instead.")
     public func removeContextKeyword(_ element: String) {
         removeExtKeyword(element)
     }
-
+    
     @available(*, deprecated, message: "This method is deprecated. Please, use clearExtKeywords method instead.")
     public func clearContextKeywords() {
         clearExtKeywords()
     }
-
+    
     @available(*, deprecated, message: "This method is deprecated. Please, use getExtKeywords method instead.")
     public func getContextKeywords() -> Set<String> {
         getExtKeywords()
+    }
+    
+    func setExtKeywords(_ keywords: Set<String>) {
+        extKeywords = keywords
     }
 
     public func addExtKeyword(_ newElement: String) {
@@ -187,7 +189,7 @@ public class AdUnitConfig: NSObject, NSCopying {
     public func addExtKeywords(_ newElements: Set<String>) {
         extKeywords.formUnion(newElements)
     }
-
+    
     public func removeExtKeyword(_ element: String) {
         extKeywords.remove(element)
     }
@@ -202,27 +204,27 @@ public class AdUnitConfig: NSObject, NSCopying {
 
     // MARK: - App Content (app.content.data)
 
-    public func setAppContent(_ appContent: PBMORTBAppContent) {
+    public func setAppContent(_ appContent: PBMORTBAppContent?) {
         self.appContent = appContent
     }
-
+    
     public func getAppContent() -> PBMORTBAppContent? {
         return appContent
     }
-
+    
     public func clearAppContent() {
         appContent = nil
     }
-
+    
     public func addAppContentData(_ dataObjects: [PBMORTBContentData]) {
         if appContent == nil {
             appContent = PBMORTBAppContent()
         }
-
+        
         if appContent?.data == nil {
             appContent?.data = [PBMORTBContentData]()
         }
-
+        
         appContent?.data?.append(contentsOf: dataObjects)
     }
 
@@ -231,34 +233,38 @@ public class AdUnitConfig: NSObject, NSCopying {
             appContent?.data?.removeAll(where: { $0 == dataObject })
         }
     }
-
+    
     public func clearAppContentData() {
         appContent?.data?.removeAll()
     }
-
+    
     // MARK: - User Data (user.data)
-
+    
+    func setUserData(_ userData: [PBMORTBContentData]?) {
+        self.userData = userData
+    }
+        
     public func getUserData() -> [PBMORTBContentData]? {
         return userData
     }
-
+    
     public func addUserData(_ userDataObjects: [PBMORTBContentData]) {
         if userData == nil {
             userData = [PBMORTBContentData]()
         }
         userData?.append(contentsOf: userDataObjects)
     }
-
+    
     public func removeUserData(_ userDataObject: PBMORTBContentData) {
         if let userData = userData, userData.contains(userDataObject) {
             self.userData?.removeAll { $0 == userDataObject }
         }
     }
-
+    
     public func clearUserData() {
         userData?.removeAll()
     }
-
+    
     // MARK: - The Prebid Ad Slot
 
     public func setPbAdSlot(_ newElement: String?) {
@@ -270,7 +276,7 @@ public class AdUnitConfig: NSObject, NSCopying {
     }
 
     // MARK: - Private Properties
-
+    
     private var extensionData = [String : Set<String>]()
 
     private var appContent: PBMORTBAppContent?
@@ -278,16 +284,16 @@ public class AdUnitConfig: NSObject, NSCopying {
     private var userData: [PBMORTBContentData]?
 
     private var extKeywords = Set<String>()
-
+    
     private var sizes: [CGSize]?
 
     private var pbAdSlot: String?
-
+    
     // MARK: - NSCopying
-
+    
     @objc public func copy(with zone: NSZone? = nil) -> Any {
         let clone = AdUnitConfig(configId: self.configId, size: self.adSize)
-
+        
         clone.adFormats = self.adFormats
         clone.adConfiguration.adFormats = self.adConfiguration.adFormats
         clone.adConfiguration.isInterstitialAd = self.adConfiguration.isInterstitialAd
@@ -305,17 +311,17 @@ public class AdUnitConfig: NSObject, NSCopying {
         clone.userData = self.userData
         clone.adPosition = self.adPosition
         clone.pbAdSlot = self.pbAdSlot
-
+        
         return clone
     }
-
+    
     // MARK: - Private Methods
 
     private func updateAdFormat() {
         if adConfiguration.adFormats == adFormats {
             return
         }
-
+        
         self.adConfiguration.adFormats = adFormats
         self.refreshInterval = (adConfiguration.winningBidAdFormat == .video) ? 0 : refreshIntervalDefault;
     }

@@ -26,6 +26,8 @@ public class BidResponse: NSObject {
     
     public private(set) var tmaxrequest: NSNumber?
     
+    public private(set) var ext: PBMORTBBidResponseExt?
+    
     private(set) var rawResponse: RawBidResponse<PBMORTBBidResponseExt, NSDictionary, PBMORTBBidExt>?
     
     public convenience init(adUnitId: String?, targetingInfo: [String: String]?) {
@@ -85,9 +87,18 @@ public class BidResponse: NSObject {
         self.allBids = allBids
         self.targetingInfo = targetingInfo.count > 0 ? targetingInfo : nil
         tmaxrequest = rawBidResponse.ext.tmaxrequest
+        self.ext = rawBidResponse.ext
     }
     
     public func setTargetingInfo(with newValue: [String : String]) {
         targetingInfo = newValue
+    }
+    
+    public func addTargetingInfoValue(key: String, value: String) {
+        if targetingInfo == nil {
+            targetingInfo = [:]
+        }
+        
+        targetingInfo?[key] = value
     }
 }
