@@ -22,5 +22,10 @@ end
 
 ## If you do not use Cocoapods
 
-Contact us for a framework build you can easily use in your project
+Contact us for a framework build you can manually import into your project
 
+## Changes in this version 
+
+- Only one small change: adUnits contain automatic customTargeting `"instl":"0"` or `"instl":"1"`
+- built from 2.1.2 (`2.1.2+20240312` causes problems for cocoapods because it expects only a numeric build version, so we appended a `2`)
+- updated Podfile info (above) to explicitly include GoogleAppMeasurement, GoogleUtilities and PromisesObjC
