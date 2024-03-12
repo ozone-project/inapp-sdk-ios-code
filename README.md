@@ -1,7 +1,7 @@
 
 ## Use Cocoapods?
 
-Easily include the Prebid Mobile SDK for your primary ad server in your Podfile/
+Easily include the Prebid Mobile SDK for your primary ad server in your Podfile
 
 ```
 platform :ios, '12.0'
