@@ -473,6 +473,7 @@ public class AdUnit: NSObject, DispatcherDelegate {
     }
 
     // MARK: ozone methods
+
     /**
      * set imp[].ext.ozone.AdUnitCode
      */
@@ -486,7 +487,13 @@ public class AdUnit: NSObject, DispatcherDelegate {
      * set imp[].ext.ozone.customData
      */
     public func ozoneSetCustomDataTargeting(data: [AnyHashable: Any]) {
-        adUnitConfig.ozoneCustomDataTargeting = data
+        var _data = data
+        if(adUnitConfig.adConfiguration.isInterstitialAd) {
+            _data["instl"] = "1"
+        } else {
+            _data["instl"] = "0"
+        }
+        adUnitConfig.ozoneCustomDataTargeting = _data
     }
     public func ozoneGetCustomDataTargeting() -> [AnyHashable: Any] {
         return adUnitConfig.ozoneCustomDataTargeting ?? [:]
