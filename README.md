@@ -13,6 +13,10 @@ target 'ozone20240129-news-all-ads' do
     pod 'UsercentricsUI', '2.7.14'
 # for instream video:
     pod 'GoogleAds-IMA-iOS-SDK', '~> 3.15.1', :source => 'https://github.com/CocoaPods/Specs.git'
+    pod 'GoogleAppMeasurement'
+    pod 'GoogleUtilities'
+    pod 'PromisesObjC'
+    pod 'nanopb'
 end
 ```
 
@@ -24,4 +28,4 @@ Contact us for a framework build you can manually import into your project
 
 - migrating Ozone changes to the latest code from PrebidMobile
 - built from 2.1.22 
-- updated Podfile info (above) to remove the explicitly included GoogleAppMeasurement, GoogleUtilities and PromisesObjC
+
