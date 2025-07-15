@@ -45,7 +45,8 @@
     _extPrebid = [[PBMORTBImpExtPrebid alloc] init];
     _extSkadn = [PBMORTBImpExtSkadn new];
     _extData = [NSMutableDictionary<NSString *, id> new];
-    
+    _extOzoneData =[[NSMutableDictionary alloc] init];
+
     return self;
 }
 
