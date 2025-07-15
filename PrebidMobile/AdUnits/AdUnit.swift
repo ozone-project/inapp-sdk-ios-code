@@ -138,6 +138,19 @@ public class AdUnit: NSObject, DispatcherDelegate {
         adObject: AnyObject? = nil,
         completion: @escaping (_ bidInfo: BidInfo) -> Void
     ) {
+
+        // check we have adUnitCode and customTargeting set
+        if(self.ozoneGetImpAdUnitCode() == "") {
+            print("ERROR: no adunit code has been set for this adunit!")
+            completion(BidInfo(resultCode: .prebidInvalidConfigId))
+            return
+        }
+        if(Prebid.shared.ozoneAppPage == nil) {
+            print("ERROR: you need to call Prebid.shared.ozoneSetAppPage(url:) before you can request ads for this adunit!")
+            completion(BidInfo(resultCode: .prebidInvalidConfigId))
+            return
+        }
+
         if !(self is NativeRequest) {
             if adSizes.contains(where: { $0.width < 0 || $0.height < 0 }) {
                 completion(BidInfo(resultCode: .prebidInvalidSize))
@@ -388,5 +401,35 @@ public class AdUnit: NSObject, DispatcherDelegate {
         
         dispatcher.stop()
     }
-}
 
+    // MARK: ozone methods
+
+    /**
+     * set imp[].ext.ozone.AdUnitCode
+     */
+    public func ozoneSetImpAdUnitCode(code: String) {
+        adUnitConfig.ozoneAdUnitCode = code
+    }
+    public func ozoneGetImpAdUnitCode() -> String{
+        return adUnitConfig.ozoneAdUnitCode
+    }
+    /**
+     * set imp[].ext.ozone.customData
+     */
+    public func ozoneSetCustomDataTargeting(data: [AnyHashable: Any]) {
+        var _data = data
+        if(adUnitConfig.adConfiguration.isInterstitialAd) {
+            _data["instl"] = "1"
+        } else {
+            _data["instl"] = "0"
+        }
+        adUnitConfig.ozoneCustomDataTargeting = _data
+    }
+    public func ozoneGetCustomDataTargeting() -> [AnyHashable: Any] {
+        return adUnitConfig.ozoneCustomDataTargeting ?? [:]
+    }
+    // NOTE that transactionId is set automatically
+
+
+
+}

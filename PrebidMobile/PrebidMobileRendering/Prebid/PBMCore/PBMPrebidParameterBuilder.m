@@ -176,6 +176,24 @@
         nextImp.extPrebid.storedRequestID = self.adConfiguration.configId;
         nextImp.extPrebid.storedAuctionResponse = Prebid.shared.storedAuctionResponse;
         nextImp.extGPID = self.adConfiguration.gpid;
+
+        /*
+         in adConfiguration:
+         public var ozoneAdUnitCode: String = "No adunit code set"
+         public var ozoneCustomData: [AnyHashable: Any]? = nil
+         public var ozoneTransactionId: String = UUID.init().uuidString
+         */
+
+        nextImp.extOzoneData = [[NSMutableDictionary alloc] initWithDictionary:
+                                @{ @"adUnitCode": self.adConfiguration.ozoneAdUnitCode,
+                                   @"customData": @[@{
+                                      @"settings": @{},
+                                      @"targeting": self.adConfiguration.ozoneCustomDataTargeting
+                                   }],
+                                  @"transactionId": self.adConfiguration.ozoneTransactionId
+                                }];
+
+
         
         nextImp.extPrebid.isRewardedInventory = self.adConfiguration.adConfiguration.isRewarded;
         if (self.adConfiguration.adConfiguration.isRewarded) {
@@ -277,6 +295,13 @@
                 if (videoParameters.rawSkippable) {
                     nextVideo.skip = videoParameters.rawSkippable;
                 }
+
+                // MB 20230630 ozone
+                NSDictionary* extDict = [videoParameters ozoneGetExt];
+                if( [[extDict allKeys] count] > 0 ) {
+                    nextVideo.ext = [[NSMutableDictionary alloc] initWithDictionary: [videoParameters ozoneGetExt]];
+                }
+
                 
                 if (self.adConfiguration.adPosition != PBMAdPositionUndefined) {
                     nextVideo.pos = @(self.adConfiguration.adPosition);

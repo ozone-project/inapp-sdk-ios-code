@@ -43,6 +43,14 @@ public class AdUnitConfig: NSObject, NSCopying {
 
     public var nativeAdConfiguration: NativeAdConfiguration?
 
+    // MARK: ozone params
+
+    public var ozoneAdUnitCode: String = ""
+    public var ozoneCustomDataTargeting: [AnyHashable: Any]? = [:]
+    public var ozoneTransactionId: String = UUID.init().uuidString
+
+
+
     // MARK: - Computed Properties
     
     public var additionalSizes: [CGSize]? {

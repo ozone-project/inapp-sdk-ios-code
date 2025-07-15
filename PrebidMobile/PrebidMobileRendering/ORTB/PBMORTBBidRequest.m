@@ -24,6 +24,16 @@
 #import "PBMORTBSource.h"
 #import "PBMORTBUser.h"
 
+
+// 20230302 MB ozone change
+#import "PrebidMobileSwiftHeaders.h"
+#if __has_include("PrebidMobile-Swift.h")
+#import "PrebidMobile-Swift.h"
+#else
+#import <PrebidMobile/PrebidMobile-Swift.h>
+#endif
+
+
 @implementation PBMORTBBidRequest
 
 - (nonnull instancetype)init {

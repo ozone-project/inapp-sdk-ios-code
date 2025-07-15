@@ -63,6 +63,9 @@ public class VideoParameters: NSObject {
     public var linearity: SingleContainerInt?
     
     public var adSize: CGSize?
+
+    // Ozone: this holds the array we will use for video.ext
+    private var ext: [AnyHashable: Any]
     
     /// List of blocked creative attributes.
     public var battr: [Signals.CreativeAttribute]?
@@ -91,6 +94,15 @@ public class VideoParameters: NSObject {
             protocols?.toIntArray()
         }
     }
+
+    // Ozone: get & set imp[].video.ext
+    public func ozoneSetExt(data: [AnyHashable: Any]) {
+        self.ext = data
+    }
+    public func ozoneGetExt() -> [AnyHashable: Any] {
+        return self.ext
+    }
+
     
     /// Helper property
     public var rawBattrs: [Int]? {
@@ -109,6 +121,7 @@ public class VideoParameters: NSObject {
     /// - Parameter mimes: supported MIME types
     public init(mimes: [String]) {
         self.mimes = mimes
+        self.ext = [:] // ozone
     }
     
     ///  Objective-C API

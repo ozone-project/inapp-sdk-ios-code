@@ -76,7 +76,9 @@
     if (self.playbackmethod > 0) {
         ret[@"playbackmethod"] = self.playbackmethod;
     }
-    
+
+    ret[@"ext"] = self.ext; // ozone
+
     ret = [ret pbmCopyWithoutEmptyVals];
     
     return ret;
@@ -102,6 +104,7 @@
     _delivery = jsonDictionary[@"delivery"];
     _pos = jsonDictionary[@"pos"];
     _api = jsonDictionary[@"api"];
+    _ext = jsonDictionary[@"ext"]; // ozone
     _battr = jsonDictionary[@"battr"];
     _skip = jsonDictionary[@"skip"];
     

@@ -115,3 +115,5 @@ Pods/
 
 # Visual Studio Code 
 .build/
+
+.idea/
