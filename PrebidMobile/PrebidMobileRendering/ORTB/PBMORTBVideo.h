@@ -170,6 +170,9 @@ NS_ASSUME_NONNULL_BEGIN
 //Note: PrebidMobile doesn't yet support Companion ads, so no apis are supported.
 @property (nonatomic, copy, nullable) NSArray<NSNumber *> *api;
 
+// ozone. this is video.ext. Should contain context, playerSize, format
+@property (nonatomic, copy) NSDictionary *ext;
+
 //Int. Supported VAST companion ad types. Recommended if companion Banner objects are included via the companionad array.
 //Refer to 5.12:
 //1 Static Resource
