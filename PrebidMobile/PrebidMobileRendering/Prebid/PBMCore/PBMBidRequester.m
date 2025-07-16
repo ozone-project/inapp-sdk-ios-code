@@ -79,7 +79,12 @@
     self.completion = completion ?: ^(BidResponse *r, NSError *e) {};
     
     NSString * const requestString = [self getRTBRequest];
-    
+    /*
+	    Ozone logging
+	*/
+    NSLog(@"Bid request string is : %@", requestString); 
+
+           
     NSError * hostURLError = nil;
     NSString * const requestServerURL = [Host.shared getHostURLAndReturnError:&hostURLError];
     
