@@ -63,7 +63,7 @@ do
 	-workspace PrebidMobile.xcworkspace \
 	-scheme "${schemes[$n]}" \
 	-configuration Release \
-	-arch arm64 \
+    -destination "generic/platform=iOS" \
 	-sdk "iphoneos" \
 	-derivedDataPath $XCODE_BUILD_DIR \
 	-archivePath "$XCODE_ARCHIVE_DIR/${schemes[$n]}.xcarchive" \
@@ -79,6 +79,7 @@ do
 	-workspace PrebidMobile.xcworkspace \
 	-scheme "${schemes[$n]}" \
 	-configuration Release \
+     -destination "generic/platform=iOS Simulator" \
 	-sdk "iphonesimulator" \
 	-derivedDataPath $XCODE_BUILD_DIR \
 	-archivePath "$XCODE_ARCHIVE_DIR/${schemes[$n]}$POSTFIX_SIMULATOR.xcarchive" \
