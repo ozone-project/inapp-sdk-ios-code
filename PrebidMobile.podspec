@@ -2,12 +2,13 @@ Pod::Spec.new do |s|
 
   s.name         = "PrebidMobile"
   s.version      = "3.0.2"
-  s.summary      = "PrebidMobile is a lightweight framework that integrates directly with Prebid Server."
+  s.summary      = "PrebidMobile is a lightweight framework that integrates directly with Prebid Server. This is a fork which integrates with the Ozone prebid server."
 
   s.description  = <<-DESC
-    Prebid-Mobile-SDK is a lightweight framework that integrates directly with Prebid Server to increase yield for publishers by adding more mobile buyers."
+    Prebid-Mobile-SDK is a lightweight framework that integrates directly with Prebid Server to increase yield for publishers by adding more mobile buyers. This is a fork which
+integrates with the Ozone prebid server."
     DESC
-  s.homepage     = "https://www.prebid.org"
+  s.homepage     = "https://www.ozoneproject.com"
 
 
   s.license      = { :type => "Apache License, Version 2.0", :text => <<-LICENSE
@@ -27,22 +28,23 @@ Pod::Spec.new do |s|
     LICENSE
     }
 
-  s.author                 = { "Prebid.org, Inc." => "info@prebid.org" }
-  s.platform     	   = :ios, "12.0"
-  s.swift_version 	   = '5.0'
-  s.source      	   = { :git => "https://github.com/prebid/prebid-mobile-ios.git", :tag => "#{s.version}" }
-  s.xcconfig 		   = { :LIBRARY_SEARCH_PATHS => '$(inherited)',
-			       :OTHER_CFLAGS => '$(inherited)',
-			       :OTHER_LDFLAGS => '$(inherited)',
-			       :HEADER_SEARCH_PATHS => '$(inherited)',
-			       :FRAMEWORK_SEARCH_PATHS => '$(inherited)'
-			     }
+  s.author                 = { "Ozone Project (Prebid.org, Inc.)" => "engineering@ozoneproject.com" }
+  s.platform               = :ios, "12.0"
+  s.swift_version          = '5.0'
+# NOTE that our tags have to be called ozone-[M.m.b] because the [M.m.b] names are already taken by prebid upstream repo
+  s.source                 = { :git => "https://github.com/ozone-project/inapp-sdk-ios-code.git", :tag => "ozone-#{s.version}" }
+  s.xcconfig               = { :LIBRARY_SEARCH_PATHS => '$(inherited)',
+                               :OTHER_CFLAGS => '$(inherited)',
+                               :OTHER_LDFLAGS => '$(inherited)',
+                               :HEADER_SEARCH_PATHS => '$(inherited)',
+                               :FRAMEWORK_SEARCH_PATHS => '$(inherited)'
+                             }
   s.requires_arc = true
 
-  s.frameworks = [ 'UIKit', 
-                   'Foundation', 
-                   'MapKit', 
-                   'SafariServices', 
+  s.frameworks = [ 'UIKit',
+                   'Foundation',
+                   'MapKit',
+                   'SafariServices',
                    'SystemConfiguration',
                    'AVFoundation',
                    'CoreGraphics',
@@ -58,9 +60,9 @@ Pod::Spec.new do |s|
 
   s.subspec 'core' do |core|
     core.source_files = 'PrebidMobile/**/*.{h,m,swift}'
-    
-    core.private_header_files = [ 
-      'PrebidMobile/PrebidMobileRendering/Networking/Parameters/PBMParameterBuilderService.h', 
+
+    core.private_header_files = [
+      'PrebidMobile/PrebidMobileRendering/Networking/Parameters/PBMParameterBuilderService.h',
       'PrebidMobile/PrebidMobileRendering/Prebid+TestExtension.h',
       'PrebidMobile/PrebidMobileRendering/3dPartyWrappers/OpenMeasurement/PBMOpenMeasurementFriendlyObstructionTypeBridge.h',
       'PrebidMobile/ConfigurationAndTargeting/InternalUserConsentDataManager.h',
@@ -68,8 +70,4 @@ Pod::Spec.new do |s|
     ]
     core.vendored_frameworks = 'Frameworks/OMSDK-Static_Prebidorg.xcframework'
   end
-
-  s.pod_target_xcconfig = {
-    'BUILD_LIBRARY_FOR_DISTRIBUTION' => 'YES'
-  }
 end
