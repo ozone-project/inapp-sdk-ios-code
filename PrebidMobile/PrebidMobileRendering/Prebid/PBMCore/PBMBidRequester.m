@@ -85,7 +85,6 @@
     PBMLogInfo(@"Bid request (hardcoded in Universal Binary) string is : %@", requestString);
     // when using the Universal Binary PBMLogInfo does not log anything at all.
     // NSLog(@"Bid request (hardcoded in Universal Binary) string is : %@", requestString);
-    PBMLogInfo(@"Bid request update 20250723");
 
 
     NSError * hostURLError = nil;
