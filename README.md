@@ -9,7 +9,7 @@ use_frameworks!
 
 target 'ozone20240129-news-all-ads' do
     pod 'PrebidMobile', '3.0.2', :source => 'https://github.com/ozone-project/inapp-sdk-ios-podspec'
-    pod 'Google-Mobile-Ads-SDK'
+    pod 'Google-Mobile-Ads-SDK', '11.1.0'
     pod 'UsercentricsUI', '2.7.14'
 # for instream video:
     pod 'GoogleAds-IMA-iOS-SDK', '~> 3.15.1', :source => 'https://github.com/CocoaPods/Specs.git'
