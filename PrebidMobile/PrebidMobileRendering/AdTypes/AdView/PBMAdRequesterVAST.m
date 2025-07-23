@@ -16,11 +16,11 @@
 #import "PBMAdRequestResponseVAST.h"
 #import "PBMAdRequesterVAST.h"
 #import "PBMConstants.h"
-#import "PBMError.h"
 #import "PBMMacros.h"
 #import "PBMURLComponents.h"
 #import "PBMVastAdsBuilder.h"
 #import "PBMVastRequester.h"
+#import "Log+Extensions.h"
 
 #import "PrebidMobileSwiftHeaders.h"
 #if __has_include("PrebidMobile-Swift.h")

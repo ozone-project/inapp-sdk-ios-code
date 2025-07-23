@@ -16,9 +16,7 @@
 #import "PBMFunctions.h"
 #import "PBMFunctions+Private.h"
 #import "PBMFunctions+Testing.h"
-
-#import "PBMConstants.h"
-#import "PBMError.h"
+#import "Log+Extensions.h"
 
 #import "PrebidMobileSwiftHeaders.h"
 #if __has_include("PrebidMobile-Swift.h")
@@ -38,7 +36,7 @@ static NSString * const PBMPlistExt = @"plist";
 @implementation PBMFunctions
 
 + (nonnull NSString *)sdkVersion {
-    NSString *version = Constants.PREBID_VERSION;
+    NSString *version = PrebidConstants.PREBID_VERSION;
     return version ? version : @"";
 }
 
@@ -229,6 +227,18 @@ static NSString * const PBMPlistExt = @"plist";
     }
     
     return [jsonString stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+}
+
++ (nullable NSArray<PBMJsonDictionary *> *)dictionariesForPassthrough:(id)passthrough {
+    if ([passthrough isKindOfClass:[NSArray<PBMJsonDictionary*> class]]) {
+        NSArray<PBMJsonDictionary *> *response = passthrough;
+        return response;
+    } else if ([passthrough isKindOfClass:[PBMJsonDictionary class]]) {
+        NSDictionary *response = passthrough;
+        return @[response];
+    } else {
+        return nil;
+    }
 }
 
 #pragma mark - SDK Info

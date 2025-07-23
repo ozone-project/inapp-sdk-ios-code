@@ -21,7 +21,7 @@ class PrebidServerStatusRequester {
     
     init() {
         // Default status endpoint
-        if let hostString = try? Host.shared.getHostURL(host: Prebid.shared.prebidServerHost),
+        if let hostString = try? Host.shared.getHostURL(),
            let host = URL(string: hostString)?.host,
            let generatedStatusEndpoint = PathBuilder.buildURL(for: host, path: PBMServerEndpoints.status) {
             
@@ -44,6 +44,11 @@ class PrebidServerStatusRequester {
     // MARK: - Internal Methods
     
     func requestStatus(_ completion: @escaping PrebidInitializationCallback) {
+        guard !Prebid.shared.shouldDisableStatusCheck else {
+            completion(.serverStatusSkipped, nil)
+            return
+        }
+        
         guard let serverEndpoint = serverEndpoint else {
             completion(.serverStatusWarning, PBMError.error(description: "Prebid SDK failed to get Prebid Server status endpoint."))
             return

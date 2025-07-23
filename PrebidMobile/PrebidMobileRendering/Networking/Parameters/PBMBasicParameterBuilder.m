@@ -20,6 +20,7 @@
 #import "InternalUserConsentDataManager.h"
 
 #import "PBMBasicParameterBuilder.h"
+#import "Log+Extensions.h"
 
 #import "PrebidMobileSwiftHeaders.h"
 #if __has_include("PrebidMobile-Swift.h")
@@ -121,8 +122,6 @@
         
         //set secure=1 for https or secure=0 for http
         rtbImp.secure = @1;
-        
-        rtbImp.clickbrowser = @(self.sdkConfiguration.impClickbrowserType);
     }
     
     bidRequest.regs.coppa = self.targeting.coppa;
@@ -137,7 +136,7 @@
 }
 
 - (void)appendFormatSpecificParametersForRequest:(PBMORTBBidRequest *)bidRequest {
-    if ([self.adConfiguration.adFormats containsObject:AdFormat.banner] || [self.adConfiguration.adFormats containsObject:AdFormat.display]) {
+    if ([self.adConfiguration.adFormats containsObject:AdFormat.banner]) {
         [self appendDisplayParametersForRequest:bidRequest];
     }
     

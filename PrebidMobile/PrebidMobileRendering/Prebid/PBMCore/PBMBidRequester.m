@@ -13,13 +13,12 @@
  limitations under the License.
  */
 
-#import "PBMBidRequester.h"
 #import "PBMBidResponseTransformer.h"
-#import "PBMError.h"
 #import "PBMORTBPrebid.h"
 #import "PBMPrebidParameterBuilder.h"
 #import "PBMParameterBuilderService.h"
 #import "PBMORTBSDKConfiguration.h"
+#import "Log+Extensions.h"
 
 #import "PrebidMobileSwiftHeaders.h"
 #if __has_include("PrebidMobile-Swift.h")
@@ -30,7 +29,7 @@
 
 #import "PBMMacros.h"
 
-@interface PBMBidRequester ()
+@interface PBMBidRequester_Objc: NSObject <PBMBidRequester>
 
 @property (nonatomic, strong, nonnull, readonly) id<PrebidServerConnectionProtocol> connection;
 @property (nonatomic, strong, nonnull, readonly) Prebid *sdkConfiguration;
@@ -41,7 +40,7 @@
 
 @end
 
-@implementation PBMBidRequester
+@implementation PBMBidRequester_Objc
 
 - (instancetype)initWithConnection:(id<PrebidServerConnectionProtocol>)connection
                   sdkConfiguration:(Prebid *)sdkConfiguration
@@ -58,66 +57,81 @@
 }
 
 - (void)requestBidsWithCompletion:(void (^)(BidResponse *, NSError *))completion {
+    @weakify(self);
+    [PBMUserAgentService.shared fetchUserAgentWithCompletion:^(NSString * _Nonnull userAgent) {
+        @strongify(self);
+        [self makeRequestWithCompletion:completion];
+    }];
+}
+
+- (void)makeRequestWithCompletion:(void (^)(BidResponse *, NSError *))completion {
     NSError * const setupError = [self findErrorInSettings];
     if (setupError) {
         completion(nil, setupError);
         return;
     }
-    
+
     if (self.completion) {
         completion(nil, [PBMError requestInProgress]);
         return;
     }
-    
-    self.completion = completion ?: ^(BidResponse *r, NSError *e) {};
-    
-    NSString * const requestString = [self getRTBRequest];
-    NSLog(@"request string is : %@", requestString);
 
-           
+    self.completion = completion ?: ^(BidResponse *r, NSError *e) {};
+
+    NSString * const requestString = [self getRTBRequest];
+    /*
+	    Ozone logging
+	*/
+    PBMLogInfo(@"Bid request (hardcoded in Universal Binary) string is : %@", requestString);
+    // when using the Universal Binary PBMLogInfo does not log anything at all.
+    // NSLog(@"Bid request (hardcoded in Universal Binary) string is : %@", requestString);
+
+
     NSError * hostURLError = nil;
-    NSString * const requestServerURL = [Host.shared getHostURLWithHost:self.sdkConfiguration.prebidServerHost error:&hostURLError];
-    
+    NSString * const requestServerURL = [Host.shared getHostURLAndReturnError:&hostURLError];
+
     if (hostURLError) {
         completion(nil, hostURLError);
         return;
     }
-    
+
     const NSInteger rawTimeoutMS_onRead     = self.sdkConfiguration.timeoutMillis;
     NSNumber * const dynamicTimeout_onRead  = self.sdkConfiguration.timeoutMillisDynamic;
-        
-    const NSTimeInterval postTimeout = (dynamicTimeout_onRead
-                                        ? dynamicTimeout_onRead.doubleValue
-                                        : (rawTimeoutMS_onRead / 1000.0));
-    
+
+    const NSTimeInterval postTimeout = (dynamicTimeout_onRead ? dynamicTimeout_onRead.doubleValue : (rawTimeoutMS_onRead / 1000.0));
+
+    NSData *rtbRequestData = [requestString dataUsingEncoding:NSUTF8StringEncoding];
+
     @weakify(self);
     NSDate * const requestDate = [NSDate date];
     [self.connection post:requestServerURL
-                     data:[requestString dataUsingEncoding:NSUTF8StringEncoding]
+                     data:rtbRequestData
                   timeout:postTimeout
                  callback:^(PrebidServerResponse * _Nonnull serverResponse) {
         @strongify(self);
         if (!self) { return; }
-        
+
         void (^ const completion)(BidResponse *, NSError *) = self.completion;
         self.completion = nil;
-        
+
         if (serverResponse.statusCode == 204) {
             completion(nil, PBMError.blankResponse);
             return;
         }
-        
+
         if (serverResponse.error) {
             PBMLogInfo(@"Bid Request Error: %@", [serverResponse.error localizedDescription]);
             completion(nil, serverResponse.error);
             return;
         }
-        
+
         PBMLogInfo(@"Bid Response: %@", [[NSString alloc] initWithData:serverResponse.rawData encoding:NSUTF8StringEncoding]);
-        
+        // when using the Universal Binary PBMLogInfo does not log anything at all.
+        // NSLog(@"Bid response (hardcoded in Universal Binary) is : %@", [[NSString alloc] initWithData:serverResponse.rawData encoding:NSUTF8StringEncoding]);
+
         NSError *trasformationError = nil;
         BidResponse * const _Nullable bidResponse = [PBMBidResponseTransformer transformResponse:serverResponse error:&trasformationError];
-        
+
         if (bidResponse && !trasformationError) {
             NSNumber * const tmaxrequest = bidResponse.tmaxrequest;
             if (tmaxrequest) {
@@ -127,7 +141,7 @@
                 const NSTimeInterval remoteTimeout = ([responseDate timeIntervalSinceDate:requestDate]
                                                       + bidResponseTimeout
                                                       + 0.2);
-                NSString * const currentServerURL = [Host.shared getHostURLWithHost:self.sdkConfiguration.prebidServerHost error:nil];
+                NSString * const currentServerURL = [Host.shared getHostURLAndReturnError:nil];
                 if (self.sdkConfiguration.timeoutMillisDynamic == nil && [currentServerURL isEqualToString:requestServerURL]) {
                     const NSInteger rawTimeoutMS_onWrite = self.sdkConfiguration.timeoutMillis;
                     const NSTimeInterval appTimeout = rawTimeoutMS_onWrite / 1000.0;
@@ -136,44 +150,46 @@
                     self.sdkConfiguration.timeoutUpdated = true;
                 };
             }
-            
+
             PBMORTBSDKConfiguration *pbsSDKConfig = [bidResponse.ext.extPrebid.passthrough filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(PBMORTBExtPrebidPassthrough *_Nullable evaluatedObject, NSDictionary<NSString *,id> * _Nullable bindings) {
                 return [evaluatedObject.type isEqual: @"prebidmobilesdk"];
             }]].firstObject.sdkConfiguration;
-            
+
             if(pbsSDKConfig) {
                 if(pbsSDKConfig.cftBanner) {
                     Prebid.shared.creativeFactoryTimeout = pbsSDKConfig.cftBanner.doubleValue;
                 }
-                
+
                 if(pbsSDKConfig.cftPreRender) {
                     Prebid.shared.creativeFactoryTimeoutPreRenderContent = pbsSDKConfig.cftPreRender.doubleValue;
                 }
             }
         }
-        
+
         completion(bidResponse, trasformationError);
+        [Prebid.shared callEventDelegateAsync_prebidBidRequestDidFinishWithRequestData:rtbRequestData
+                                                                     responseData:serverResponse.rawData];
     }];
 }
 
 - (NSString *)getRTBRequest {
-    
+
     PBMPrebidParameterBuilder * const
     prebidParamsBuilder = [[PBMPrebidParameterBuilder alloc] initWithAdConfiguration:self.adUnitConfiguration
                                                                     sdkConfiguration:self.sdkConfiguration
                                                                            targeting:self.targeting
                                                                     userAgentService:self.connection.userAgentService];
-    
+
     NSDictionary<NSString *, NSString *> * const
     params = [PBMParameterBuilderService buildParamsDictWithAdConfiguration:self.adUnitConfiguration.adConfiguration
                                                      extraParameterBuilders:@[prebidParamsBuilder]];
-        
+
     return params[@"openrtb"];
 }
 
 - (NSError *)findErrorInSettings {
     if (!CGSizeEqualToSize(self.adUnitConfiguration.adSize, CGSizeZero)) {
-        
+
         if ([self isInvalidSize:[NSValue valueWithCGSize:self.adUnitConfiguration.adSize]]) {
             return [PBMError prebidInvalidSize];
         }

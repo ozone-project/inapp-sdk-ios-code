@@ -16,8 +16,6 @@
 #import <UIKit/UIKit.h>
 #import <MobileCoreServices/MobileCoreServices.h>
 
-#import "PBMCreativeModel.h"
-#import "PBMError.h"
 #import "PBMFunctions+Private.h"
 #import "PBMMacros.h"
 #import "PBMModalManager.h"
@@ -27,6 +25,7 @@
 #import "PBMVideoCreative.h"
 #import "PBMVideoView.h"
 #import "UIView+PBMExtensions.h"
+#import "Log+Extensions.h"
 
 #import "PrebidMobileSwiftHeaders.h"
 #if __has_include("PrebidMobile-Swift.h")
@@ -54,7 +53,6 @@ static CGSize const MUTE_BUTTON_SIZE = { 24, 24 };
 @property (nonatomic, weak) PBMVideoCreative *creative;
 @property (nonatomic, strong) PBMEventManager *eventManager;
 @property (nonatomic, strong) PBMTouchDownRecognizer *tapdownGestureRecognizer;
-@property (nonatomic, assign) BOOL showLearnMore;
 
 #pragma mark UI
 
@@ -85,6 +83,10 @@ static CGSize const MUTE_BUTTON_SIZE = { 24, 24 };
 @property (nonatomic, assign) BOOL isPlaybackStarted;
 @property (nonatomic, assign) BOOL isPlaybackFinished;
 
+@property (nonatomic, strong, nonnull) NSNumber * progressBarDuration;
+
+- (NSNumber *)calculateProgressBarDuration;
+
 @end
 
 #pragma mark - Implementation
@@ -107,12 +109,17 @@ static CGSize const MUTE_BUTTON_SIZE = { 24, 24 };
     layer.player = avPlayer;
 }
 
+- (PBMAdConfiguration *)adConfiguration {
+    return self.creative.creativeModel.adConfiguration;
+}
+
 #pragma mark - Initialization
 
 - (instancetype)initWithEventManager:(PBMEventManager *)eventManager {
     self = [super init];
     if (self) {
         [self setupWithEventManager:eventManager];
+        self.progressBarDuration = [self calculateProgressBarDuration];
     }
     
     return self;
@@ -125,6 +132,7 @@ static CGSize const MUTE_BUTTON_SIZE = { 24, 24 };
     if (self) {
         self.creative = creative;
         [self setupWithEventManager:creative.eventManager];
+        self.progressBarDuration = [self calculateProgressBarDuration];
     }
     
     return self;
@@ -157,7 +165,7 @@ static CGSize const MUTE_BUTTON_SIZE = { 24, 24 };
     self.accessibilityIdentifier = @"PBMVideoView";
     
     if (!self.creative.creativeModel.adConfiguration.isInterstitialAd ||
-        (self.creative.creativeModel.adConfiguration.isOptIn && !self.creative.creativeModel.hasCompanionAd)) {
+        (!self.creative.creativeModel.adConfiguration.isRewarded)) {
         [self setupTapRecognizer];
     }
     
@@ -197,6 +205,7 @@ static CGSize const MUTE_BUTTON_SIZE = { 24, 24 };
 }
 
 - (void)updateControls {
+    [self updateLearnMoreButtonVisibility];
     [self updateLearnMoreButton];
     
     [self resetMuteControls];
@@ -220,7 +229,7 @@ static CGSize const MUTE_BUTTON_SIZE = { 24, 24 };
     }
     
     // For rewarded ad learn more should be hidden
-    if (self.creative.creativeModel.adConfiguration.isOptIn) {
+    if (self.creative.creativeModel.adConfiguration.isRewarded) {
         self.showLearnMore = NO;
         return;
     }
@@ -320,7 +329,7 @@ static CGSize const MUTE_BUTTON_SIZE = { 24, 24 };
 
 #pragma mark - PBMModalManagerDelegate
 
-- (void)modalManagerDidFinishPop:(PBMModalState*)state {
+- (void)modalManagerDidFinishPop:(id<PBMModalState>)state {
     if (self.creative != nil) {
         [self.creative resume];
     } else {
@@ -328,7 +337,7 @@ static CGSize const MUTE_BUTTON_SIZE = { 24, 24 };
     }
 }
 
-- (void)modalManagerDidLeaveApp:(PBMModalState*)state {
+- (void)modalManagerDidLeaveApp:(id<PBMModalState>)state {
     [self.creative modalManagerDidLeaveApp:state];
 }
 
@@ -339,7 +348,6 @@ static CGSize const MUTE_BUTTON_SIZE = { 24, 24 };
         [self.btnLearnMore removeFromSuperview];
     }
     
-    [self updateLearnMoreButtonVisibility];
     if (!self.showLearnMore) {
         return;
     }
@@ -355,7 +363,7 @@ static CGSize const MUTE_BUTTON_SIZE = { 24, 24 };
         [self.progressBar removeFromSuperview];
     }
     
-    if (!self.creative.creativeModel.adConfiguration.isOptIn) {
+    if (!self.creative.creativeModel.adConfiguration.isRewarded) {
         return;
     }
     
@@ -493,7 +501,9 @@ static CGSize const MUTE_BUTTON_SIZE = { 24, 24 };
         return;
     }
     
-    if (!self.creative.creativeModel.hasCompanionAd || self.creative.creativeModel.adConfiguration.isOptIn || self.creative.creativeModel.adConfiguration.isBuiltInVideo) {
+    if (!self.creative.creativeModel.hasCompanionAd ||
+        self.creative.creativeModel.adConfiguration.isRewarded ||
+        self.creative.creativeModel.adConfiguration.isBuiltInVideo) {
         return;
     }
     
@@ -616,7 +626,8 @@ static CGSize const MUTE_BUTTON_SIZE = { 24, 24 };
 
     [self.avPlayer play];
     
-    [self handleSkipDelay:self.creative.creativeModel.adConfiguration.videoControlsConfig.skipDelay videoDuration:self.creative.creativeModel.displayDurationInSeconds.doubleValue];
+    [self handleSkipDelay:self.adConfiguration.videoControlsConfig.skipDelay
+            videoDuration:self.creative.creativeModel.displayDurationInSeconds.doubleValue];
 
     if (!self.isPlaybackStarted) {
         self.isPlaybackStarted = YES;
@@ -638,8 +649,8 @@ static CGSize const MUTE_BUTTON_SIZE = { 24, 24 };
         }];
     }
     
-    if (self.creative.creativeModel.adConfiguration.isOptIn) {
-        self.progressBar.duration = [self requiredVideoDuration];
+    if (self.adConfiguration.isRewarded) {
+        self.progressBar.duration = [self.progressBarDuration doubleValue];
     }
 }
 
@@ -759,13 +770,13 @@ static CGSize const MUTE_BUTTON_SIZE = { 24, 24 };
     
     [self.videoViewDelegate videoViewCompletedDisplay];
     
-    if (self.creative.creativeModel.adConfiguration.isOptIn) {
+    if (self.adConfiguration.isRewarded) {
         self.progressBar.hidden = YES;
     }
     
-    if (self.creative.creativeModel.adConfiguration.isBuiltInVideo && !self.creative.creativeModel.hasCompanionAd) {
+    if (self.adConfiguration.isBuiltInVideo && !self.creative.creativeModel.hasCompanionAd) {
         // UI: need to give some time to hide the interstitial before showing the Watch Again
-        if (self.creative.creativeModel.adConfiguration.presentAsInterstitial) {
+        if (self.adConfiguration.presentAsInterstitial) {
             @weakify(self);
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                 @strongify(self);
@@ -827,11 +838,21 @@ static CGSize const MUTE_BUTTON_SIZE = { 24, 24 };
     }
     
     CGFloat playingTime = CMTimeGetSeconds(currentTime);
-    CGFloat remainingTime = [self requiredVideoDuration] - playingTime;
+    CGFloat remainingTime = [self.progressBarDuration doubleValue] - playingTime;
 
-    if (self.creative.creativeModel.adConfiguration.isOptIn) {
-        [self.progressBar updateProgress:remainingTime];
+    if (self.creative.creativeModel.adConfiguration.isRewarded) {
+        
+        // Update progress bar
+        if(remainingTime >= 0) {
+            [self.progressBar updateProgress:remainingTime];
+        } else {
+            if (self.progressBar.superview) {
+                [self.progressBar removeFromSuperview];
+            }
+        }
     }
+    
+    [self.videoViewDelegate videoViewCurrentPlayingTime:[NSNumber numberWithDouble:playingTime]];
     
     [self stopAdIfNeeded];
 
@@ -1001,5 +1022,70 @@ static CGSize const MUTE_BUTTON_SIZE = { 24, 24 };
         }
     }
 }
+
+- (NSNumber *)calculateProgressBarDuration {
+    // Get video duration
+    CGFloat videoDuration = [self requiredVideoDuration];
+    
+    // If creative is not rewarded or has companion ad - return video duration.
+    if (!self.creative.creativeModel.adConfiguration.isRewarded ||
+        self.creative.creativeModel.hasCompanionAd) {
+        return [NSNumber numberWithDouble:videoDuration];
+    }
+    
+    PBMRewardedConfig * rewardedConfig = self.creative.creativeModel.adConfiguration.rewardedConfig;
+    
+    NSString * ortbPlaybackevent = rewardedConfig.videoPlaybackevent;
+    NSNumber * ortbVideoTime = rewardedConfig.videoTime;
+    NSNumber * ortbPostrewardedTime = rewardedConfig.postRewardTime ?: 0;
+    
+    // If both completion criteria are missing (playbackevent and time) - use default configuration
+    if (!ortbPlaybackevent && !ortbVideoTime) {
+        ortbPlaybackevent = rewardedConfig.defaultVideoPlaybackEvent;
+    }
+    
+    double progressBarDuration = ([ortbPostrewardedTime doubleValue] >= 0) ? [ortbPostrewardedTime doubleValue] : 0.0;
+    
+    // If completion criteria is playback event
+    if (ortbPlaybackevent) {
+        PBMTrackingEvent event = [PBMTrackingEventDescription getEventWith:ortbPlaybackevent];
+    
+        switch(event) {
+            case PBMTrackingEventStart:
+                break;
+            case PBMTrackingEventFirstQuartile:
+                progressBarDuration += 0.25 * videoDuration;
+                break;
+            case PBMTrackingEventMidpoint:
+                progressBarDuration += 0.5 * videoDuration;
+                break;
+            case PBMTrackingEventThirdQuartile:
+                progressBarDuration += 0.75 * videoDuration;
+                break;
+            case PBMTrackingEventComplete:
+                progressBarDuration = videoDuration;
+                break;
+            default:
+                break;
+        }
+        
+        // if calculated value is bigger than video duration => return video duration
+        return (progressBarDuration > videoDuration) ? [NSNumber numberWithDouble:videoDuration] :
+        [NSNumber numberWithDouble:progressBarDuration];
+    }
+    
+    // If completion criteria is time
+    if (ortbVideoTime && [ortbVideoTime doubleValue] >= 0.0) {
+        progressBarDuration += [ortbVideoTime doubleValue];
+        
+        // if calculated value is bigger than video duration => return video duration
+        return (progressBarDuration > videoDuration) ? [NSNumber numberWithDouble:videoDuration] :
+        [NSNumber numberWithDouble:progressBarDuration];
+    }
+    
+    // Return video duration by default
+    return [NSNumber numberWithDouble:[self requiredVideoDuration]];
+}
+
 
 @end

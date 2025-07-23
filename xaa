@@ -1,0 +1,59 @@
+PrebidMobile/PrebidMobileRendering/Prebid/PBMCore/AdUnitConfig.swift:    // MARK: ozone params
+PrebidMobile/PrebidMobileRendering/Prebid/PBMCore/AdUnitConfig.swift:    public var ozoneAdUnitCode: String = ""
+PrebidMobile/PrebidMobileRendering/Prebid/PBMCore/AdUnitConfig.swift:    public var ozoneCustomDataTargeting: [AnyHashable: Any]? = [:]
+PrebidMobile/PrebidMobileRendering/Prebid/PBMCore/AdUnitConfig.swift:    public var ozoneTransactionId: String = UUID.init().uuidString
+PrebidMobile/PrebidMobileRendering/Prebid/PBMCore/PBMPrebidParameterBuilder.m:         public var ozoneAdUnitCode: String = "No adunit code set"
+PrebidMobile/PrebidMobileRendering/Prebid/PBMCore/PBMPrebidParameterBuilder.m:         public var ozoneCustomData: [AnyHashable: Any]? = nil
+PrebidMobile/PrebidMobileRendering/Prebid/PBMCore/PBMPrebidParameterBuilder.m:         public var ozoneTransactionId: String = UUID.init().uuidString
+PrebidMobile/PrebidMobileRendering/Prebid/PBMCore/PBMPrebidParameterBuilder.m:        nextImp.extOzoneData = [[NSMutableDictionary alloc] initWithDictionary:
+PrebidMobile/PrebidMobileRendering/Prebid/PBMCore/PBMPrebidParameterBuilder.m:                                @{ @"adUnitCode": self.adConfiguration.ozoneAdUnitCode,
+PrebidMobile/PrebidMobileRendering/Prebid/PBMCore/PBMPrebidParameterBuilder.m:                                      @"targeting": self.adConfiguration.ozoneCustomDataTargeting
+PrebidMobile/PrebidMobileRendering/Prebid/PBMCore/PBMPrebidParameterBuilder.m:                                  @"transactionId": self.adConfiguration.ozoneTransactionId
+PrebidMobile/PrebidMobileRendering/Prebid/PBMCore/PBMPrebidParameterBuilder.m:                // MB 20230630 ozone
+PrebidMobile/PrebidMobileRendering/Prebid/PBMCore/PBMPrebidParameterBuilder.m:                NSDictionary* extDict = [videoParameters ozoneGetExt];
+PrebidMobile/PrebidMobileRendering/Prebid/PBMCore/PBMPrebidParameterBuilder.m:                    nextVideo.ext = [[NSMutableDictionary alloc] initWithDictionary: [videoParameters ozoneGetExt]];
+PrebidMobile/PrebidMobileRendering/ORTB/PBMORTBBidRequest.m:// 20230302 MB ozone change
+PrebidMobile/PrebidMobileRendering/ORTB/PBMORTBApp.m:// 20230302 MB ozone change, allows us to pull data from Prebid.shared
+PrebidMobile/PrebidMobileRendering/ORTB/PBMORTBApp.m:    if(Prebid.shared.ozoneAppPage) {
+PrebidMobile/PrebidMobileRendering/ORTB/PBMORTBApp.m:        ret[@"ext"][@"page"] = Prebid.shared.ozoneAppPage;
+PrebidMobile/PrebidMobileRendering/ORTB/PBMORTBDevice.m:// 20230302 MB ozone change, allows us to pull data from Prebid.shared
+PrebidMobile/PrebidMobileRendering/ORTB/PBMORTBDevice.m:    // 20230301 ozone change
+PrebidMobile/PrebidMobileRendering/ORTB/PBMORTBImp.m:// 20230302 MB ozone change, allows us to pull data from Prebid.shared
+PrebidMobile/PrebidMobileRendering/ORTB/PBMORTBImp.m:    // Ozone changes
+PrebidMobile/PrebidMobileRendering/ORTB/PBMORTBImp.m:    ret[@"ext"][@"ozone"] = self.extOzoneData; //this was set by PMBPrebidParameterBuilder
+PrebidMobile/PrebidMobileRendering/ORTB/PBMORTBImp.m:    _extOzoneData = jsonDictionary[@"ext"][@"ozone"];
+PrebidMobile/PrebidMobileRendering/ORTB/PBMORTBImp.m:    // MB ozone
+PrebidMobile/PrebidMobileRendering/ORTB/PBMORTBImp.m:    ret[@"ozone"] = self.extOzoneData; // contains adUnitCode, targeting, transactionId
+PrebidMobile/PrebidMobileRendering/ORTB/PBMORTBVideo.m:    ret[@"ext"] = self.ext; // ozone
+PrebidMobile/PrebidMobileRendering/ORTB/PBMORTBVideo.m:    _ext = jsonDictionary[@"ext"]; // ozone
+PrebidMobile/ConfigurationAndTargeting/Prebid.swift:    // MARK: OZONE ADDITIONS; all ozone methods start `ozone....` so it's easy to find them in intellisense
+PrebidMobile/ConfigurationAndTargeting/Prebid.swift:    // MB 20230301 Ozone changes
+PrebidMobile/ConfigurationAndTargeting/Prebid.swift:    public func ozoneSetAppPage( url: String ) {
+PrebidMobile/ConfigurationAndTargeting/Prebid.swift:        ozoneAppPage = url;
+PrebidMobile/ConfigurationAndTargeting/Prebid.swift:    public func ozoneSetDeviceIp( ip: String ) {
+PrebidMobile/ConfigurationAndTargeting/Prebid.swift:     * Set the entire ext.ozone object at once
+PrebidMobile/ConfigurationAndTargeting/Prebid.swift:    public func ozoneSetExtOzone(data: [AnyHashable: Any] ) {
+PrebidMobile/ConfigurationAndTargeting/Prebid.swift:        extOzoneDict = data;
+PrebidMobile/ConfigurationAndTargeting/Prebid.swift:    public func ozoneIncludeExtPrebid() {
+PrebidMobile/ConfigurationAndTargeting/Prebid.swift:    @objc public var extOzoneDict:[AnyHashable: Any] = [:]
+PrebidMobile/ConfigurationAndTargeting/Prebid.swift:    @objc public var ozoneAppPage: String? = nil
+PrebidMobile/ConfigurationAndTargeting/Prebid.swift:    // MARK: END OF OZONE
+PrebidMobile/AdUnits/AdUnit.swift:        if(self.ozoneGetImpAdUnitCode() == "") {
+PrebidMobile/AdUnits/AdUnit.swift:        if(Prebid.shared.ozoneAppPage == nil) {
+PrebidMobile/AdUnits/AdUnit.swift:            print("ERROR: you need to call Prebid.shared.ozoneSetAppPage(url:) before you can request ads for this adunit!")
+PrebidMobile/AdUnits/AdUnit.swift:    // MARK: ozone methods
+PrebidMobile/AdUnits/AdUnit.swift:     * set imp[].ext.ozone.AdUnitCode
+PrebidMobile/AdUnits/AdUnit.swift:    public func ozoneSetImpAdUnitCode(code: String) {
+PrebidMobile/AdUnits/AdUnit.swift:        adUnitConfig.ozoneAdUnitCode = code
+PrebidMobile/AdUnits/AdUnit.swift:    public func ozoneGetImpAdUnitCode() -> String{
+PrebidMobile/AdUnits/AdUnit.swift:        return adUnitConfig.ozoneAdUnitCode
+PrebidMobile/AdUnits/AdUnit.swift:     * set imp[].ext.ozone.customData
+PrebidMobile/AdUnits/AdUnit.swift:    public func ozoneSetCustomDataTargeting(data: [AnyHashable: Any]) {
+PrebidMobile/AdUnits/AdUnit.swift:        adUnitConfig.ozoneCustomDataTargeting = _data
+PrebidMobile/AdUnits/AdUnit.swift:    public func ozoneGetCustomDataTargeting() -> [AnyHashable: Any] {
+PrebidMobile/AdUnits/AdUnit.swift:        return adUnitConfig.ozoneCustomDataTargeting ?? [:]
+PrebidMobile/AdUnits/Parameters/VideoParameters.swift:    // Ozone: this holds the array we will use for video.ext
+PrebidMobile/AdUnits/Parameters/VideoParameters.swift:    // Ozone: get & set imp[].video.ext
+PrebidMobile/AdUnits/Parameters/VideoParameters.swift:    public func ozoneSetExt(data: [AnyHashable: Any]) {
+PrebidMobile/AdUnits/Parameters/VideoParameters.swift:    public func ozoneGetExt() -> [AnyHashable: Any] {
+PrebidMobile/AdUnits/Parameters/VideoParameters.swift:        self.ext = [:] // ozone

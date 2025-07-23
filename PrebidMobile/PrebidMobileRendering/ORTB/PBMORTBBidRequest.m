@@ -62,9 +62,13 @@
     for (PBMORTBImp *imp in self.imp) {
         [impressions addObject:[imp toJsonDictionary]];
     }
+    //set impressions and ext beforehand so they are not overridden by arbitrary params from API/JSON
+    ret[@"imp"] = impressions;
+    PBMMutableJsonDictionary * const ext = [PBMMutableJsonDictionary new];
+    ext[@"prebid"] = [[self.extPrebid toJsonDictionary] nullIfEmpty];
+    ret[@"ext"] = [[ext pbmCopyWithoutEmptyVals] nullIfEmpty];
     
     ret[@"id"] = self.requestID;
-    ret[@"imp"] = impressions;
     
     ret[@"app"] = [[self.app toJsonDictionary] nullIfEmpty];
     ret[@"device"] = [[self.device toJsonDictionary] nullIfEmpty];
@@ -74,14 +78,6 @@
     ret[@"regs"] = [[self.regs toJsonDictionary] nullIfEmpty];
     ret[@"source"] = [[self.source toJsonDictionary] nullIfEmpty];
     
-    if(Prebid.shared.doInsertExtPrebid) {
-        PBMMutableJsonDictionary * const ext = [PBMMutableJsonDictionary new];
-        ext[@"prebid"] = [[self.extPrebid toJsonDictionary] nullIfEmpty];
-        ret[@"ext"] = [[ext pbmCopyWithoutEmptyVals] nullIfEmpty];
-    }
-    if(!ret[@"ext"]) {
-        ret[@"ext"] = [[NSMutableDictionary alloc] init];
-    }
     ret = [ret pbmCopyWithoutEmptyVals];
     
     return ret;
@@ -91,6 +87,7 @@
     if (!(self = [self init])) {
         return nil;
     }
+    
     _requestID = jsonDictionary[@"id"];
     
     NSMutableArray<PBMORTBImp *> *impressions = [NSMutableArray<PBMORTBImp *> new];
@@ -109,7 +106,6 @@
     _tmax = jsonDictionary[@"tmax"];
     _regs = [[PBMORTBRegs alloc] initWithJsonDictionary:jsonDictionary[@"regs"]];
     _source = [[PBMORTBSource alloc] initWithJsonDictionary:jsonDictionary[@"source"]];
-    
     _extPrebid = [[PBMORTBBidRequestExtPrebid alloc] initWithJsonDictionary:jsonDictionary[@"ext"][@"prebid"] ?: @{}];
     
     return self;

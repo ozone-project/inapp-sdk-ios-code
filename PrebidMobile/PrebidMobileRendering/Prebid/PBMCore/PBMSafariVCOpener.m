@@ -19,9 +19,9 @@
 #import "PBMDeferredModalState.h"
 #import "PBMFunctions.h"
 #import "PBMFunctions+Private.h"
-#import "PBMInterstitialDisplayProperties.h"
 #import "PBMModalViewController.h"
 #import "PBMWindowLocker.h"
+#import "Log+Extensions.h"
 
 #import "PrebidMobileSwiftHeaders.h"
 #if __has_include("PrebidMobile-Swift.h")
@@ -94,24 +94,17 @@
         return NO;
     }
     
-    if ([self shouldOpenURLSchemeExternally:strURLscheme]) {
-        //Open link outside of app
-        [PBMFunctions attemptToOpen:url];
-        if (self.onWillLeaveAppBlock != nil) {
-            self.onWillLeaveAppBlock();
-        }
-        if (onClickthroughExitBlock != nil) {
-            onClickthroughExitBlock();
-        }
-        return YES;
-    }
-    
     UIViewController * const viewControllerForPresentingModals = self.viewControllerProvider();
     if (viewControllerForPresentingModals == nil) {
         PBMLogError(@"self.viewControllerForPresentingModals is nil");
         return NO;
     }
      
+    if (!([strURLscheme isEqualToString:@"http"] || [strURLscheme isEqualToString:@"https"])) {
+        PBMLogError(@"Attempting to open url [%@] in SFSafariViewController. SFSafariViewController only supports initial URLs with http:// or https:// schemes.", url);
+        return NO;
+    }
+    
     //Show clickthrough browser
     
     return [self openClickthroughWithURL:url
@@ -133,39 +126,37 @@
 }
 
 - (BOOL)shouldOpenURLSchemeExternally:(NSString *)strURLscheme {
-    if (self.sdkConfiguration.useExternalClickthroughBrowser ||
-        [PBMConstants.urlSchemesNotSupportedOnClickthroughBrowser containsObject:strURLscheme])
-    {
-        return YES;
-    }
-    
     return NO;
 }
     
 - (BOOL)openClickthroughWithURL:(NSURL *)url
                  viewController:(UIViewController *)viewControllerForPresentingModals
 {
-    self.safariViewController = [[SFSafariViewController alloc] initWithURL:url];
-    self.safariViewController.delegate = self;
-    
-    PBMOpenMeasurementSession * const measurementSession = self.measurementSessionProvider();
-    PBMWindowLocker * windowLocker = [[PBMWindowLocker alloc] initWithWindow:viewControllerForPresentingModals.view.window
-                                                          measurementSession:measurementSession];
-    [windowLocker lock];
-    
-    UIViewController * presentingViewController = viewControllerForPresentingModals;
-    
-    if (self.modalManager.modalViewController) {
-        presentingViewController = self.modalManager.modalViewController;
+    @try {
+        self.safariViewController = [[SFSafariViewController alloc] initWithURL:url];
+        self.safariViewController.delegate = self;
+        
+        PBMOpenMeasurementSession * const measurementSession = self.measurementSessionProvider();
+        PBMWindowLocker * windowLocker = [[PBMWindowLocker alloc] initWithWindow:viewControllerForPresentingModals.view.window
+                                                              measurementSession:measurementSession];
+        [windowLocker lock];
+        
+        UIViewController * presentingViewController = viewControllerForPresentingModals;
+        
+        if (self.modalManager.modalViewController) {
+            presentingViewController = self.modalManager.modalViewController;
+        }
+        
+        if (self.onWillLoadURLInClickthrough != nil) {
+            self.onWillLoadURLInClickthrough();
+        }
+        
+        [presentingViewController presentViewController:self.safariViewController animated:YES completion:^{
+            [windowLocker unlock];
+        }];
+    } @catch (NSException *exception) {
+        PBMLogError(@"Error occurred during URL opening: %@", exception.reason);
     }
-    
-    if (self.onWillLoadURLInClickthrough != nil) {
-        self.onWillLoadURLInClickthrough();
-    }
-    
-    [presentingViewController presentViewController:self.safariViewController animated:YES completion:^{
-        [windowLocker unlock];
-    }];
     
     return YES;
 }

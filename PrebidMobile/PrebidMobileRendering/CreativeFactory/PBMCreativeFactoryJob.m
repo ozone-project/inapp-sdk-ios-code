@@ -14,15 +14,12 @@
  */
 
 #import "PBMCreativeFactoryJob.h"
-#import "PBMCreativeModel.h"
 #import "PBMHTMLCreative.h"
 #import "PBMVideoCreative.h"
 #import "PBMAbstractCreative.h"
 #import "PBMDownloadDataHelper.h"
-#import "PBMTransaction.h"
 #import "PBMMacros.h"
-#import "PBMError.h"
-#import "PBMError.h"
+#import "Log+Extensions.h"
 
 #import "PrebidMobileSwiftHeaders.h"
 #if __has_include("PrebidMobile-Swift.h")
@@ -36,7 +33,7 @@
 @property (nonatomic, strong) PBMCreativeModel *creativeModel;
 @property (nonatomic, copy) PBMCreativeFactoryJobFinishedCallback finishedCallback;
 @property (nonatomic, strong) id<PrebidServerConnectionProtocol> serverConnection;
-@property (nonatomic, strong) PBMTransaction *transaction;
+@property (nonatomic, strong) id<PBMTransaction>transaction;
 
 @end
 
@@ -45,7 +42,7 @@
 }
 
 - (nonnull instancetype)initFromCreativeModel:(nonnull PBMCreativeModel *)creativeModel
-                                  transaction:(PBMTransaction *)transaction
+                                  transaction:(id<PBMTransaction>)transaction
                              serverConnection:(nonnull id<PrebidServerConnectionProtocol>)serverConnection
                               finishedCallback:(PBMCreativeFactoryJobFinishedCallback)finishedCallback {
     self = [super init];
@@ -104,7 +101,8 @@
 - (void)startJobWithTimeInterval:(NSTimeInterval)timeInterval {
     PBMAssert(self.creativeModel);
     if (!self.creativeModel) {
-        [self failWithError:[PBMError errorWithMessage:@"PBMCreativeFactoryJob: Undefined creative model" type:PBMErrorTypeInternalError]];
+        [self failWithError:[PBMError errorWithMessage:@"PBMCreativeFactoryJob: Undefined creative model"
+                                                  type:PBMErrorType.internalError]];
         return;
     }
     
@@ -116,7 +114,8 @@
         if (!self) { return; }
         
         if (self.state != PBMCreativeFactoryJobStateInitialized) {
-            [self failWithError:[PBMError errorWithMessage:@"PBMCreativeFactoryJob: Tried to start PBMCreativeFactory twice" type:PBMErrorTypeInternalError]];
+            [self failWithError:[PBMError errorWithMessage:@"PBMCreativeFactoryJob: Tried to start PBMCreativeFactory twice"
+                                                      type:PBMErrorType.internalError]];
             return;
         }
         
@@ -125,7 +124,8 @@
     
     dispatch_async(dispatch_get_main_queue(), ^{
         if (!(self.creativeModel && self.creativeModel.adConfiguration)) {
-            [self failWithError:[PBMError errorWithMessage:@"PBMCreativeFactoryJob: Undefined creative model" type:PBMErrorTypeInternalError]];
+            [self failWithError:[PBMError errorWithMessage:@"PBMCreativeFactoryJob: Undefined creative model"
+                                                      type:PBMErrorType.internalError]];
             return;
         }
         
@@ -149,7 +149,8 @@
             @strongify(self);
             if (!self) { return; }
             
-            [self failWithError:[PBMError errorWithMessage:@"PBMCreativeFactoryJob: Failed to complete in specified time interval" type:PBMErrorTypeInternalError]];
+            [self failWithError:[PBMError errorWithMessage:@"PBMCreativeFactoryJob: Failed to complete in specified time interval"
+                                                      type:PBMErrorType.internalError]];
         });
     };
     
@@ -158,7 +159,8 @@
 
 - (void)attemptAUIDCreative {
     if (!(self.creativeModel && self.creativeModel.adConfiguration)) {
-        [self failWithError:[PBMError errorWithMessage:@"PBMCreativeFactoryJob: Undefined creative model" type:PBMErrorTypeInternalError]];
+        [self failWithError:[PBMError errorWithMessage:@"PBMCreativeFactoryJob: Undefined creative model"
+                                                  type:PBMErrorType.internalError]];
         return;
     }
     
@@ -176,7 +178,8 @@
 
 - (void)attemptVASTCreative {
     if (!self.creativeModel) {
-        [self failWithError:[PBMError errorWithMessage:@"PBMCreativeFactoryJob: Undefined creative model" type:PBMErrorTypeInternalError]];
+        [self failWithError:[PBMError errorWithMessage:@"PBMCreativeFactoryJob: Undefined creative model"
+                                                  type:PBMErrorType.internalError]];
         return;
     }
     
