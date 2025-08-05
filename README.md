@@ -63,12 +63,6 @@ Contact us for a framework build you can manually import into your project (Univ
   }
 
 
-- adUnit.fetchDemand changed method signature
-
-- InstreamVideoAdUnit fetchDemand - we now have to use a different method signature; the previous one was marked in 2.2.0: "Deprecated. Use fetchDemand(completion: @escaping (_ bidInfo: BidInfo) -> Void) instead." and has now been removed. Use:
-  adUnit.fetchDemand { [weak self] (bidInfo: BidInfo) in
-  and get what you need from: bidInfo.targetingKeywords and bidInfo.resultCode
-
 ```
 
 ## Other changes
